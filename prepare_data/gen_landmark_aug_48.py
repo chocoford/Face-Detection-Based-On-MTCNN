@@ -10,8 +10,8 @@ import numpy.random as npr
 from prepare_data.BBox_utils import getDataFromTxt, BBox
 from prepare_data.Landmark_utils import rotate, flip
 
-dstdir = "DATA/48/train_ONet_landmark_aug"
-OUTPUT = 'DATA/48'
+dstdir = "../DATA/48/train_ONet_landmark_aug"
+OUTPUT = '../DATA/48'
 if not exists(OUTPUT): os.mkdir(OUTPUT)
 if not exists(dstdir): os.mkdir(dstdir)
 assert(exists(dstdir) and exists(OUTPUT))
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     net = "ONet"
     #train_txt = "train.txt"
     train_txt = "prepare_data/trainImageList.txt"
-    data_dir = "DATA"
+    data_dir = "../DATA"
     imgs,landmarks = GenerateData(train_txt, data_dir, OUTPUT,net,argument=True)
     #WriteToTfrecord(imgs,landmarks,net)
    

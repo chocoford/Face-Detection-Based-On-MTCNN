@@ -125,7 +125,7 @@ def get_dataset(dir, net='PNet'):
 
 
 if __name__ == '__main__':
-    dir = 'DATA/'
+    dir = '../DATA/'
     net = 'PNet'
-    output_directory = 'DATA/imglists/PNet'
+    output_directory = '../DATA/imglists/PNet'
     run(dir, net, output_directory, shuffling=True)

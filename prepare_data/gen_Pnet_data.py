@@ -7,10 +7,10 @@ import numpy.random as npr
 from prepare_data.utils import load_wider_face_gt_boxes, IoU 
 
 anno_file = "wider_face_train_bbx_gt.txt"
-pos_save_dir = "train_data/p_net/positive"
-part_save_dir = "train_data/p_net/part"
-neg_save_dir = 'train_data/p_net/negative'
-save_dir = "train_data/p_net"
+pos_save_dir = "../train_data/p_net/positive"
+part_save_dir = "../train_data/p_net/part"
+neg_save_dir = '../train_data/p_net/negative'
+save_dir = "../train_data/p_net"
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 if not os.path.exists(pos_save_dir):

@@ -11,8 +11,8 @@ import random
 import tensorflow as tf
 import sys
 import numpy.random as npr
-dstdir = "DATA/24/train_RNet_landmark_aug"
-OUTPUT = 'DATA/24'
+dstdir = "../DATA/24/train_RNet_landmark_aug"
+OUTPUT = '../DATA/24'
 if not exists(OUTPUT): os.mkdir(OUTPUT)
 if not exists(dstdir): os.mkdir(dstdir)
 assert(exists(dstdir) and exists(OUTPUT))

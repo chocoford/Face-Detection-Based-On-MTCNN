@@ -119,9 +119,9 @@ def get_dataset(dir, net, name):
 
 
 if __name__ == '__main__':
-    dir = 'DATA/'
+    dir = '../DATA/'
     net = '48'
-    output_directory = 'DATA/imglists/ONet'
+    output_directory = '../DATA/imglists/ONet'
     run(dir, net, output_directory, "pos", shuffling=True)
     run(dir, net, output_directory, "neg", shuffling=True)
     run(dir, net, output_directory, "part", shuffling=True)

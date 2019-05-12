@@ -2,7 +2,7 @@ import numpy as np
 import numpy.random as npr
 import os
 
-data_dir = 'DATA'
+data_dir = '../DATA'
 size = 24
 net = "RNet"
 

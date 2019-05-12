@@ -25,10 +25,10 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
 
 if __name__ == '__main__':
     #data path
-    base_dir = 'DATA/imglists/PNet'
+    base_dir = '../DATA/imglists/PNet'
     model_name = 'MTCNN'
     #with landmark
-    model_path = 'data/%s_model/PNet_landmark/PNet' % model_name
+    model_path = '../data/%s_model/PNet_landmark/PNet' % model_name
             
     prefix = model_path
     end_epoch = 30

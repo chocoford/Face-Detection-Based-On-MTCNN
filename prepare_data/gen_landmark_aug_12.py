@@ -176,9 +176,9 @@ def GenerateData(ftxt,data_path,net,argument=False):
     return F_imgs,F_landmarks
 
 if __name__ == '__main__':
-    dstdir = "DATA/12/train_PNet_landmark_aug"
-    OUTPUT = 'DATA/12'
-    data_path = 'DATA'
+    dstdir = "../DATA/12/train_PNet_landmark_aug"
+    OUTPUT = '../DATA/12'
+    data_path = '../DATA'
     if not exists(OUTPUT):
         os.mkdir(OUTPUT)
     if not exists(dstdir):

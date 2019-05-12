@@ -17,10 +17,10 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
     train(net_factory, prefix, end_epoch, base_dir, display=display, base_lr=lr)
 
 if __name__ == '__main__':
-    base_dir = 'DATA/imglists/RNet'
+    base_dir = '../DATA/imglists/RNet'
 
     model_name = 'MTCNN'
-    model_path = 'data/%s_model/RNet_Landmark/RNet' % model_name
+    model_path = '../data/%s_model/RNet_Landmark/RNet' % model_name
     prefix = model_path
     end_epoch = 22
     display = 100

@@ -1,3 +1,15 @@
+# costume ignore
+data/*
+train_data/12/*
+train_data/24/*
+train_data/48/*
+train_data/imglists/*
+train_data/lfw_5590/*
+train_data/net_7876/*
+train_data/no_LM24/*
+train_data/no_LM48/*
+logs/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

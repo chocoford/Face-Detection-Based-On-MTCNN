@@ -142,59 +142,59 @@ def t_net(prefix, epoch,
 
 
     """
-    # detectors = [None, None, None]
-    # print("Test model: ", test_mode)
-    # #PNet-echo
-    # model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
-    # print(model_path[0])
-    # # load pnet model
-    # if slide_window:
-    #     PNet = Detector(P_Net, 12, batch_size[0], model_path[0])
-    # else:
-    #     PNet = FcnDetector(P_Net, model_path[0])
-    # detectors[0] = PNet
+    detectors = [None, None, None]
+    print("Test model: ", test_mode)
+    #PNet-echo
+    model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
+    print(model_path[0])
+    # load pnet model
+    if slide_window:
+        PNet = Detector(P_Net, 12, batch_size[0], model_path[0])
+    else:
+        PNet = FcnDetector(P_Net, model_path[0])
+    detectors[0] = PNet
 
-    # # load rnet model
-    # pnet_detections = None
-    # if test_mode in ["RNet", "ONet"]:
-    #     print("==================================", test_mode)
-    #     RNet = Detector(R_Net, 24, batch_size[1], model_path[1])
-    #     detectors[1] = RNet
-    #     print("load pnet predictions...")
-    #     pnet_detections = pickle.load(open(os.path.join("data/24/RNet", 'detections.pkl'), 'rb'))
-    #     print("load pnet predictions done.")
+    # load rnet model
+    pnet_detections = None
+    if test_mode in ["RNet", "ONet"]:
+        print("==================================", test_mode)
+        RNet = Detector(R_Net, 24, batch_size[1], model_path[1])
+        detectors[1] = RNet
+        print("load pnet predictions...")
+        pnet_detections = pickle.load(open(os.path.join("../data/24/RNet", 'detections.pkl'), 'rb'))
+        print("load pnet predictions done.")
 
-    # # load onet model
-    # rnet_detections = None
-    # if test_mode == "ONet":
-    #     print("==================================", test_mode)
-    #     ONet = Detector(O_Net, 48, batch_size[2], model_path[2])
-    #     detectors[2] = ONet
-    #     print("load rnet predictions...")
-    #     rnet_detections = pickle.load(open(os.path.join("/data/48/ONet", 'detections.pkl'), 'rb'))
-    #     print("load rnet predictions done.")
+    # load onet model
+    rnet_detections = None
+    if test_mode == "ONet":
+        print("==================================", test_mode)
+        ONet = Detector(O_Net, 48, batch_size[2], model_path[2])
+        detectors[2] = ONet
+        print("load rnet predictions...")
+        rnet_detections = pickle.load(open(os.path.join("../data/48/ONet", 'detections.pkl'), 'rb'))
+        print("load rnet predictions done.")
         
     # detec的数据源始终是一样的
     basedir = 'E:/Document/Datasets/Wider Face'
-    # #anno_file
+    #anno_file
     filename = 'wider_face_train_bbx_gt.txt'
     #data是一个dict，data["images"]为所有照片路径list，data["bboxes"]是所有照片bboxes的值，一一对应
     data = read_annotation(basedir,filename)
     # 初始化mtcnn_detector，就是训练好的模型
-    # mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
-    #                                stride=stride, threshold=thresh, slide_window=slide_window)
-    # print("==================================")
+    mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
+                                   stride=stride, threshold=thresh, slide_window=slide_window)
+    print("==================================")
     # 注意是在“test”模式下
     # imdb = IMDB("wider", image_set, root_path, dataset_path, 'test')
     # gt_imdb = imdb.gt_imdb()
-    # print('load test data')
-    # #所有照片，训练时为12880张
-    # test_data = TestLoader(data['images'])
-    # print ('finish loading')
+    print('load test data')
+    #所有照片，训练时为12880张
+    test_data = TestLoader(data['images'])
+    print ('finish loading')
     #list
-    # print ('start detecting....')
-    # detections,_ = mtcnn_detector.detect_face(test_data, pnet_detections, rnet_detections) #调用训练好的pnet，返回的是candidate
-    # print ('finish detecting ')
+    print ('start detecting....')
+    detections,_ = mtcnn_detector.detect_face(test_data, pnet_detections, rnet_detections) #调用训练好的pnet，返回的是candidate
+    print ('finish detecting ')
     save_net = 'RNet'
     if test_mode == "PNet":
         save_net = "RNet"
@@ -204,14 +204,14 @@ def t_net(prefix, epoch,
     save_path = os.path.join(data_dir, save_net)
     print ('save_path is :')
     print(save_path)
-    # if not os.path.exists(save_path):
-    #     os.mkdir(save_path)
-    # # 把所有candidate写到文件中序列化
-    # save_file = os.path.join(save_path, "detections.pkl")
-    # with open(save_file, 'wb') as f:
-    #     pickle.dump(detections, f,1)
-    # print("save done.")
-    # print("%s测试完成开始OHEM" % image_size)
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    # 把所有candidate写到文件中序列化
+    save_file = os.path.join(save_path, "detections.pkl")
+    with open(save_file, 'wb') as f:
+        pickle.dump(detections, f,1)
+    print("save done.")
+    print("%s测试完成开始OHEM" % image_size)
     # 然后根据candidate和gt的Iou把每个candidate分类并保存到文本和相应的照片
     save_hard_example(image_size, data, save_path)
 

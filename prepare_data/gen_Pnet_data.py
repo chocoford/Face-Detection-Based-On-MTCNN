@@ -86,7 +86,9 @@ for img_path, gt_boxes_single in gt_boxes.items():
             continue
 
         # crop another 5 images near the bounding box if IoU less than 0.5, save as negative samples
-        for i in range(5):
+        # for i in range(5):
+        i = 0
+        while i < 5:
             #size of the image to be cropped
             size = npr.randint(12, min(width, height) / 2)
             # delta_x and delta_y are offsets of (x1, y1)
@@ -113,6 +115,7 @@ for img_path, gt_boxes_single in gt_boxes.items():
                 f2.write(neg_save_dir+"/%s.jpg" % n_idx + ' 0\n')
                 cv2.imwrite(save_file, resized_im)
                 n_idx += 1
+                i += 1
 
 
         #generate positive examples and part faces

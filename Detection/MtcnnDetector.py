@@ -482,7 +482,7 @@ class MtcnnDetector(object):
                     continue
 
             all_boxes.append(boxes_c)
-            landmark = [1]
+            # landmark = [1]
             landmarks.append(landmark)
 
             

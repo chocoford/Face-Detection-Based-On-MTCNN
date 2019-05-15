@@ -30,14 +30,14 @@ class MtcnnDetector(object):
 
     def convert_to_square(self, bbox):
         """
-            convert bbox to square
+        把输入边框变成正方形状，以最长的边为基准，不改变中心点。
         Parameters:
         ----------
-            bbox: numpy array , shape n x 5
-                input bbox
+        bbox: numpy array
+        
         Returns:
         -------
-            square bbox
+        square bbox
         """
         square_bbox = bbox.copy()
 
@@ -136,7 +136,7 @@ class MtcnnDetector(object):
 
     def pad(self, bboxes, w, h):
         """
-            pad the the bboxes, alse restrict the size of it
+            pad the the bboxes, also restrict the size of it
         Parameters:
         ----------
             bboxes: numpy array, n x 5
@@ -166,7 +166,7 @@ class MtcnnDetector(object):
 
         x, y, ex, ey = bboxes[:, 0], bboxes[:, 1], bboxes[:, 2], bboxes[:, 3]
 
-        tmp_index = np.where(ex > w - 1)
+        tmp_index = np.where(ex > w - 1) #找到candidate右边框超过图片的
         edx[tmp_index] = tmpw[tmp_index] + w - 2 - ex[tmp_index]
         ex[tmp_index] = w - 1
 
@@ -199,13 +199,13 @@ class MtcnnDetector(object):
         -------
         boxes: numpy array
             detected boxes before calibration
-        boxes_c: numpy array
+        boxes_c: numpy array n x 5 [x1, y1, x2, y2, score]
             boxes after calibration
         """
         h, w, c = im.shape
         net_size = 12
 
-        current_scale = float(net_size) / self.min_face_size  # find initial scale
+        current_scale = float(net_size) / self.min_face_size 
         # print("current_scale", net_size, self.min_face_size, current_scale)
         # risize image using current_scale
         im_resized = self.processed_image(im, current_scale)
@@ -415,8 +415,7 @@ class MtcnnDetector(object):
         # test_data is iter_
         s_time = time.time()
         for batch_idx, databatch in enumerate(test_data):
-            # databatch(image returned)
-            # batch_idx += 1
+            # databatch就是一张图片
             if batch_idx % 100 == 0 and batch_idx > 0:
                 c_time = (time.time() - s_time )/100
                 print("%d out of %d images done" % (batch_idx ,test_data.size))
@@ -426,8 +425,6 @@ class MtcnnDetector(object):
 
             im = databatch
             # pnet
-
-
             if self.pnet_detector and pnet_detections is None: # detector[0]
                 st = time.time()
                 # ignore landmark
@@ -446,7 +443,6 @@ class MtcnnDetector(object):
                 #print(all_boxes)
 
             # rnet
-
             if self.rnet_detector and rnet_detections is None:
                 if pnet_detections is not None:
                     boxes_c = pnet_detections[batch_idx]
@@ -463,8 +459,8 @@ class MtcnnDetector(object):
                     landmarks.append(empty_array)
 
                     continue
+            
             # onet
-
             if self.onet_detector:
                 if rnet_detections is not None:
                     boxes_c = rnet_detections[batch_idx]

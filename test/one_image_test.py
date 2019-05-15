@@ -64,20 +64,4 @@ for imagepath in gt_imdb:
             
     count = count + 1
     cv2.imshow("test result",image)
-    cv2.waitKey(0)    
-
-
-
-
-
-'''
-for data in test_data:
-    print type(data)
-    for bbox in all_boxes[0]:
-        print bbox
-        print (int(bbox[0]),int(bbox[1]))
-        cv2.rectangle(data, (int(bbox[0]),int(bbox[1])),(int(bbox[2]),int(bbox[3])),(0,0,255))
-    #print data
-    cv2.imshow("lala",data)
     cv2.waitKey(0)
-'''

@@ -8,11 +8,11 @@ from train_models.MTCNN_config import config
 
 class TestLoader:
     #imdb image_path(list)
-    def __init__(self, imdb, batch_size=1, shuffle=False):
-        self.imdb = imdb
+    def __init__(self, imgs_path, batch_size=1, shuffle=False):
+        self.imgs_path = imgs_path
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.size = len(imdb)#num of data
+        self.size = len(imgs_path)#num of data
         #self.index = np.arange(self.size)
         
         self.cur = 0
@@ -26,7 +26,7 @@ class TestLoader:
         self.cur = 0
         if self.shuffle:
             #shuffle test image
-            np.random.shuffle(self.imdb)
+            np.random.shuffle(self.imgs_path)
 
     def iter_next(self):
         return self.cur + self.batch_size <= self.size
@@ -56,7 +56,7 @@ class TestLoader:
             return 0
 
     def get_batch(self):
-        imdb = self.imdb[self.cur]
+        imgs_path = self.imgs_path[self.cur]
         '''
         cur_from = self.cur
         cur_to = min(cur_from + self.batch_size, self.size)
@@ -67,7 +67,7 @@ class TestLoader:
         #print type(imdb)
         #print len(imdb)
         #assert len(imdb) == 1, "Single batch only"
-        im = cv2.imread(imdb)
+        im = cv2.imread(imgs_path)
         self.data = im
 
 class ImageLoader:

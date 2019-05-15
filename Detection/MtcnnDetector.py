@@ -182,6 +182,9 @@ class MtcnnDetector(object):
         dy[tmp_index] = 0 - y[tmp_index]
         y[tmp_index] = 0
 
+        # if dx[tmp_index] < 0 or dy[tmp_index] < 0:
+        #     print("dx or dy is < 0")
+
         return_list = [dy, edy, dx, edx, y, ey, x, ex, tmpw, tmph]
         return_list = [item.astype(np.int32) for item in return_list]
 

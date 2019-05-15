@@ -43,8 +43,7 @@ for img_path, gt_boxes_single in gt_boxes.items():
 
     neg_num = 0
     #1---->50
-    # keep crop random parts, until have 50 negative examples
-    # get 50 negative sample from every image
+    #对每张图片都裁剪50张negative图片作为负样本
     while neg_num < 50:
         size = npr.randint(12, min(width, height) / 2)
         #top_left coordinate
@@ -79,13 +78,11 @@ for img_path, gt_boxes_single in gt_boxes.items():
         #gt's height
         h = y2 - y1 + 1
 
-
-        # ignore small faces and those faces has left-top corner out of the image
-        # in case the ground truth boxes of small faces are not accurate
+        # 忽视人脸小于20个像素的和不全在图像里的
         if max(w, h) < 20 or x1 < 0 or y1 < 0:
             continue
 
-        # crop another 5 images near the bounding box if IoU less than 0.5, save as negative samples
+        # 在gt附近继续裁剪5张负样本
         # for i in range(5):
         i = 0
         while i < 5:

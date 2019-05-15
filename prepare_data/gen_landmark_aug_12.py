@@ -14,16 +14,21 @@ from prepare_data.utils import IoU
 
 
 
-def GenerateData(ftxt,data_path,net,argument=False):
+def GenerateData(ftxt, data_path, output_path, img_output_path, net, argument=False):
     '''
+    参数
+    ------------
 
-    :param ftxt: name/path of the text file that contains image path,
-                bounding box, and landmarks
-
-    :param output: path of the output dir
-    :param net: one of the net in the cascaded networks
-    :param argument: apply augmentation or not
-    :return:  images and related landmarks
+        ftxt: path of anno file
+        data_path: 数据集所在目录
+        output_path: 文本文件输出目录地址
+        img_output_path: 图片输出地址
+        net: String 三个网络之一的名字
+        argument: 是否使用数据增强
+    
+    返回值
+    -------------
+        images and related landmarks
     '''
     if net == "PNet":
         size = 12
@@ -36,8 +41,8 @@ def GenerateData(ftxt,data_path,net,argument=False):
         return
     image_id = 0
     #
-    f = open(join(OUTPUT,"landmark_%s_aug.txt" %(size)),'w')
-    #dstdir = "train_landmark_few"
+    f = open(join(output_path,"landmark_%s_aug.txt" %(size)),'w')
+    #img_output_path = "train_landmark_few"
     # get image path , bounding box, and landmarks from file 'ftxt'
     data = getDataFromTxt(ftxt,data_path=data_path)
     idx = 0
@@ -62,14 +67,15 @@ def GenerateData(ftxt,data_path,net,argument=False):
         #normalize land mark by dividing the width and height of the ground truth bounding box
         # landmakrGt is a list of tuples
         for index, one in enumerate(landmarkGt):
-            # (( x - bbox.left)/ width of bounding box, (y - bbox.top)/ height of bounding box
+            # 重新计算因裁剪过后而改变的landmark的坐标，并且进行归一化
+            # (x - bbox.left) / width of bbox, (y - bbox.top) / height of bbox
             rv = ((one[0]-gt_box[0])/(gt_box[2]-gt_box[0]), (one[1]-gt_box[1])/(gt_box[3]-gt_box[1]))
-            # put the normalized value into the new list landmark
             landmark[index] = rv
         
         F_imgs.append(f_face)
-        F_landmarks.append(landmark.reshape(10))
-        landmark = np.zeros((5, 2))        
+        F_landmarks.append(landmark.reshape(10)) #[x1, y1, x2, y2, ...]
+        landmark = np.zeros((5, 2))  
+        # data augment
         if argument:
             idx = idx + 1
             if idx % 100 == 0:
@@ -98,7 +104,7 @@ def GenerateData(ftxt,data_path,net,argument=False):
 
                 cropped_im = img[ny1:ny2+1,nx1:nx2+1,:]
                 resized_im = cv2.resize(cropped_im, (size, size))
-                #cal iou
+                #calculate iou
                 iou = IoU(crop_box, np.expand_dims(gt_box,0))
                 if iou > 0.65:
                     F_imgs.append(resized_im)
@@ -152,17 +158,13 @@ def GenerateData(ftxt,data_path,net,argument=False):
             #print F_imgs.shape
             #print F_landmarks.shape
             for i in range(len(F_imgs)):
-                #if image_id % 100 == 0:
-
-                    #print('image id : ', image_id)
-
+                # 只要有一个坐标小于0或大于1就舍弃
                 if np.sum(np.where(F_landmarks[i] <= 0, 1, 0)) > 0:
                     continue
-
                 if np.sum(np.where(F_landmarks[i] >= 1, 1, 0)) > 0:
                     continue
 
-                cv2.imwrite(join(dstdir,"%d.jpg" %(image_id)), F_imgs[i])
+                cv2.imwrite(join(img_output_path,"%d.jpg" %(image_id)), F_imgs[i])
                 landmarks = map(str,list(F_landmarks[i]))
                 f.write(join(dstdir,"%d.jpg" %(image_id))+" -2 "+" ".join(landmarks)+"\n")
                 image_id = image_id + 1
@@ -177,17 +179,17 @@ def GenerateData(ftxt,data_path,net,argument=False):
 
 if __name__ == '__main__':
     dstdir = "../DATA/12/train_PNet_landmark_aug"
-    OUTPUT = '../DATA/12'
+    output_path = '../DATA/12'
     data_path = '../DATA'
-    if not exists(OUTPUT):
-        os.mkdir(OUTPUT)
+    if not exists(output_path):
+        os.mkdir(output_path)
     if not exists(dstdir):
         os.mkdir(dstdir)
-    assert (exists(dstdir) and exists(OUTPUT))
+    assert (exists(dstdir) and exists(output_path))
     # train data
     net = "PNet"
     #the file contains the names of all the landmark training data
     train_txt = "prepare_data/trainImageList.txt"
-    imgs,landmarks = GenerateData(train_txt,data_path,net,argument=True )
+    imgs,landmarks = GenerateData(train_txt, data_path, output_path, dstdir, net, argument=True)
     
    

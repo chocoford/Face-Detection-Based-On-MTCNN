@@ -64,18 +64,15 @@ def _convert_to_example(image_example, image_buffer, colorspace=b'RGB', channels
     return example
 def _convert_to_example_simple(image_example, image_buffer):
     """
-    covert to tfrecord file
-    :param image_example: dict, an image example
-    :param image_buffer: string, JPEG encoding of RGB image
-    :param colorspace:
-    :param channels:
-    :param image_format:
-    :return:
-    Example proto
+        covert to tfrecord file
+    Parameter
+    ------------
+        image_example: dict, an image example
+        image_buffer: string, JPEG encoding of RGB image
+    Return
+    -----------
+        Example proto
     """
-    # filename = str(image_example['filename'])
-
-    # class label for the whole image
     class_label = image_example['label']
     bbox = image_example['bbox']
     roi = [bbox['xmin'],bbox['ymin'],bbox['xmax'],bbox['ymax']]
@@ -176,6 +173,9 @@ def _process_image(filename, coder):
 
     return image_data, height, width
 def _process_image_withoutcoder(filename):
+    """
+    利用cv2将filename指向的图片tostring
+    """
     #print(filename)
     image = cv2.imread(filename)
     #print(type(image))

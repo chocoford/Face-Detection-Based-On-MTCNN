@@ -1,3 +1,7 @@
+"""
+利用训练好的模型进行预测，获得下一级网络的训练数据。
+"""
+
 #coding:utf-8
 import sys
 #sys.path.append("../")

@@ -1,3 +1,7 @@
+"""
+将与处理好的图片和txt通通转换成tfrecord文件，以便提高训练时的速度。
+"""
+
 #coding:utf-8
 import os
 import random
@@ -10,26 +14,22 @@ from prepare_data.tfrecord_utils import _process_image_withoutcoder, _convert_to
 
 
 def _add_to_tfrecord(filename, image_example, tfrecord_writer):
-    """Loads data from image and annotations files and add them to a TFRecord.
-
-    Args:
-      filename: Dataset directory;
-      name: Image name to add to the TFRecord;
-      tfrecord_writer: The TFRecord writer to use for writing.
     """
-    #print('---', filename)
-    #imaga_data:array to string
-    #height:original image's height
-    #width:original image's width
+    Loads data from image and annotations files and add them to a TFRecord.
+
+    Parameters
+    --------------------------
+        filename: Dataset directory;
+        name: Image name to add to the TFRecord;
+        tfrecord_writer: The TFRecord writer to use for writing.
+    """
     #image_example dict contains image's info
-    image_data, height, width = _process_image_withoutcoder(filename)
+    image_data, _, _ = _process_image_withoutcoder(filename)
     example = _convert_to_example_simple(image_example, image_data)
     tfrecord_writer.write(example.SerializeToString())
 
 
 def _get_output_filename(output_dir, name, net):
-    #st = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    #return '%s/%s_%s_%s.tfrecord' % (output_dir, name, net, st)
     return '%s/train_PNet_landmark.tfrecord' % (output_dir)
     
 
@@ -51,16 +51,15 @@ def run(dataset_dir, net, output_dir, name='MTCNN', shuffling=False):
     # filenames = dataset['filename']
     if shuffling:
         tf_filename = tf_filename + '_shuffle'
-        #random.seed(12345454)
+        #random.seed(64)
         random.shuffle(dataset)
     # Process dataset files.
     # write the data to tfrecord
-    print('lala')
+    print('start writing the data to tfrecord.')
     with tf.python_io.TFRecordWriter(tf_filename) as tfrecord_writer:
         for i, image_example in enumerate(dataset):
             if (i+1) % 100 == 0:
                 sys.stdout.write('\r>> %d/%d images has been converted' % (i+1, len(dataset)))
-                #sys.stdout.write('\r>> Converting image %d/%d' % (i + 1, len(dataset)))
             sys.stdout.flush()
             filename = image_example['filename']
             _add_to_tfrecord(filename, image_example, tfrecord_writer)
@@ -71,8 +70,16 @@ def run(dataset_dir, net, output_dir, name='MTCNN', shuffling=False):
 
 
 def get_dataset(dir, net='PNet'):
-    #get file name , label and anotation
-    #item = 'imglists/PNet/train_%s_raw.txt' % net
+    """
+        获得数据
+    Parameter
+    ---------------
+        dir: 数据所在目录
+        net: 网络类别
+    Return
+    --------------
+        dataset: list<dict>
+    """
     item = 'imglists/PNet/train_%s_landmark.txt' % net
     
     dataset_dir = os.path.join(dir, item)

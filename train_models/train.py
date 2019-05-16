@@ -17,12 +17,15 @@ import random
 import cv2
 def train_model(base_lr, loss, data_num):
     """
-    train model
-    :param base_lr: base learning rate
-    :param loss: loss
-    :param data_num:
-    :return:
-    train_op, lr_op
+        get train optimizer and learning_rate optimizer
+    Parameter
+    ---------------
+        base_lr: base learning rate
+        loss: loss
+        data_num:
+    Return
+    ---------------
+        train_op, lr_op
     """
     lr_factor = 0.1
     global_step = tf.Variable(0, trainable=False)
@@ -88,8 +91,7 @@ def image_color_distort(inputs):
     inputs = tf.image.random_saturation(inputs,lower = 0.5, upper= 1.5)
     return inputs
 
-def train(net_factory, prefix, end_epoch, base_dir,
-          display=200, base_lr=0.01):
+def train(net_factory, prefix, end_epoch, base_dir, display=200, base_lr=0.01):
     """
     train PNet/RNet/ONet
     Parameter
@@ -172,7 +174,7 @@ def train(net_factory, prefix, end_epoch, base_dir,
     saver = tf.train.Saver(max_to_keep=0)
     sess.run(init)
 
-    #visualize some variables
+    # 可视化变量
     tf.summary.scalar("cls_loss",cls_loss_op)#cls_loss
     tf.summary.scalar("bbox_loss",bbox_loss_op)#bbox_loss
     tf.summary.scalar("landmark_loss",landmark_loss_op)#landmark_loss
@@ -182,10 +184,10 @@ def train(net_factory, prefix, end_epoch, base_dir,
     logs_dir = "logs/%s" %(net)
     if os.path.exists(logs_dir) == False:
         os.mkdir(logs_dir)
-    writer = tf.summary.FileWriter(logs_dir,sess.graph)
+    writer = tf.summary.FileWriter(logs_dir, sess.graph)
     projector_config = projector.ProjectorConfig()
-    projector.visualize_embeddings(writer,projector_config)
-    #begin 
+    projector.visualize_embeddings(writer, projector_config)
+    # multithreading
     coord = tf.train.Coordinator()
     #begin enqueue thread
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
@@ -200,22 +202,11 @@ def train(net_factory, prefix, end_epoch, base_dir,
             if coord.should_stop():
                 break
             image_batch_array, label_batch_array, bbox_batch_array,landmark_batch_array = sess.run([image_batch, label_batch, bbox_batch,landmark_batch])
-            #随即反转landmark的图片，坐标也要相应变化
+            # 随即反转landmark的图片，坐标也要相应变化
             image_batch_array,landmark_batch_array = random_flip_images(image_batch_array,label_batch_array,landmark_batch_array) 
-            '''
-            print('im here')
-            print(image_batch_array.shape)
-            print(label_batch_array.shape)
-            print(bbox_batch_array.shape)
-            print(landmark_batch_array.shape)
-            print(label_batch_array[0])
-            print(bbox_batch_array[0])
-            print(landmark_batch_array[0])
-            '''
-
-
+            # get summary for visualization and train
             _,_,summary = sess.run([train_op, lr_op ,summary_op], feed_dict={input_image: image_batch_array, label: label_batch_array, bbox_target: bbox_batch_array,landmark_target:landmark_batch_array})
-
+            # display training progress
             if (step+1) % display == 0:
                 #acc = accuracy(cls_pred, labels_batch)
                 cls_loss, bbox_loss,landmark_loss,L2_loss,lr,acc = sess.run([cls_loss_op, bbox_loss_op,landmark_loss_op,L2_loss_op,lr_op,accuracy_op],
@@ -225,7 +216,6 @@ def train(net_factory, prefix, end_epoch, base_dir,
                 # landmark loss: %4f,
                 print("%s : Step: %d/%d, accuracy: %3f, cls loss: %4f, bbox loss: %4f,Landmark loss :%4f,L2 loss: %4f, Total Loss: %4f ,lr:%f " % (
                 datetime.now(), step+1,MAX_STEP, acc, cls_loss, bbox_loss,landmark_loss, L2_loss,total_loss, lr))
-
 
             #save every two epochs
             if i * config.BATCH_SIZE > num*2:

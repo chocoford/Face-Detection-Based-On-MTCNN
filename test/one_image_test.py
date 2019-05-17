@@ -55,8 +55,8 @@ for imagepath in gt_imdb:
     for bbox in all_boxes[count]:
         # if bbox[4] < 0.92:
         #     continue
-        cv2.putText(image,str(np.round(bbox[4],2)),(int(bbox[0]),int(bbox[1])),cv2.FONT_HERSHEY_TRIPLEX,1,color=(255,0,255))
-        cv2.rectangle(image, (int(bbox[0]),int(bbox[1])),(int(bbox[2]),int(bbox[3])),(0,0,255))
+        cv2.putText(image, str(np.round(bbox[4],2)), (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_TRIPLEX, 1, color=(255,0,255))
+        cv2.rectangle(image, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])),(0,0,255), 5)
         if bbox[0] < 0:
             print("there is a bbox[0] < 0", bbox[0])
     # for landmark in landmarks[count]:
@@ -64,5 +64,6 @@ for imagepath in gt_imdb:
     #         cv2.circle(image, (int(landmark[2*i]),int(int(landmark[2*i+1]))), 3, (0,0,255))
             
     count = count + 1
+    cv2.namedWindow("test result",0)
     cv2.imshow("test result",image)
     cv2.waitKey(0)

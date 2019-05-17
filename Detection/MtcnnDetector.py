@@ -77,10 +77,10 @@ class MtcnnDetector(object):
 
     def generate_bbox(self, cls_map, reg, scale, threshold):
         """
-            generate bbox from feature cls_map according to the threshold
+            generate bbox from feature cls_map according to the threshold.
         Parameters:
         ----------
-            cls_map: numpy array , n x m 
+            cls_map: numpy array , n x m
                 detect score for each position
             reg: numpy array , n x m x 4
                 bbox

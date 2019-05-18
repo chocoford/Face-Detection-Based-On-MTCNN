@@ -121,6 +121,15 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
                                                                   epoch_loss_avg.result(), 
                                                                   epoch_accuracy.result()))
 
+    # save model
+    checkpoint_dir = "../data/ultramodern_model/PNet"
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    root = tf.train.Checkpoint(optimizer=optimizer,
+                               model=model,
+                               optimizer_step=tf.train.get_or_create_global_step)
+    root.save(checkpoint_prefix)
+
 if __name__ == '__main__':
     #data path
     base_dir = '../DATA/imglists/PNet'

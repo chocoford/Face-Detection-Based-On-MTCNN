@@ -32,7 +32,7 @@ def grad(model, images, labels, bboxes, landmarks):
 def get_dataset(path, batch_size=256):
     net = "PNet"
     item = 'train_%s_landmark.txt' % net
-    dataset_dir = os.path.join("/Users/zhangdefu/Desktop", item)
+    dataset_dir = os.path.join("../data/imglists/PNet", item)
 
     imagelist = open(dataset_dir, 'r')
 
@@ -60,7 +60,7 @@ def get_dataset(path, batch_size=256):
 
     def preprocess_image(image):
         image = tf.image.decode_jpeg(image, channels=3)
-        #   image = tf.image.resize(image, [192, 192])
+        image = tf.image.resize(image, [12, 12])
         image /= 255.0  # normalize to [0,1] range
         return image
 
@@ -79,8 +79,8 @@ def get_dataset(path, batch_size=256):
     image_label_bbox_landmarks_ds = tf.data.Dataset.zip((image_ds, label_ds, bbox_ds, landmark_ds))
     # print(image_label_bbox_landmarks_ds)
 
-    ds = image_label_bbox_landmarks_ds.shuffle(buffer_size=len(all_image_paths))
-    ds = ds.repeat()
+    ds = image_label_bbox_landmarks_ds.cache()
+    ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=len(all_image_paths)))
     ds = ds.batch(batch_size)
     ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     print("get dataset done.")

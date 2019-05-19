@@ -201,7 +201,7 @@ def train(net_factory, prefix, end_epoch, base_dir, display=200, base_lr=0.01):
             i = i + 1
             if coord.should_stop():
                 break
-            image_batch_array, label_batch_array, bbox_batch_array,landmark_batch_array = sess.run([image_batch, label_batch, bbox_batch,landmark_batch])
+            image_batch_array, label_batch_array, bbox_batch_array, landmark_batch_array = sess.run([image_batch, label_batch, bbox_batch,landmark_batch])
             # 随即反转landmark的图片，坐标也要相应变化
             image_batch_array,landmark_batch_array = random_flip_images(image_batch_array,label_batch_array,landmark_batch_array) 
             # get summary for visualization and train

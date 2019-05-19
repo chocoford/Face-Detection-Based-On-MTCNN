@@ -6,7 +6,7 @@ from tensorflow import keras
 import numpy as np
 num_keep_radio = 0.7
 
-tf.enable_eager_execution()
+# tf.enable_eager_execution()
 
 #define prelu
 def prelu(inputs):
@@ -132,13 +132,14 @@ def landmark_ohem(landmark_pred,landmark_target,label):
     valid_inds = tf.where(tf.equal(label,-2),ones,zeros)
     square_error = tf.square(landmark_pred-landmark_target)
     square_error = tf.reduce_sum(square_error,axis=1)
-    num_valid = tf.reduce_sum(valid_inds)
+    num_valid = tf.reduce_sum(valid_inds) # 0
     #keep_num = tf.cast(num_valid*num_keep_radio,dtype=tf.int32)
-    keep_num = tf.cast(num_valid, dtype=tf.int32)
+    keep_num = tf.cast(num_valid, dtype=tf.int32) # 0
     square_error = square_error*valid_inds
     _, k_index = tf.nn.top_k(square_error, k=keep_num)
     square_error = tf.gather(square_error, k_index)
-    return tf.reduce_mean(square_error)
+    # mse = tf.reduce_mean(square_error)
+    return tf.reduce_mean(square_error) # 当square_error为空时会出现nan bug
     
 def cal_accuracy(cls_prob,label):
     '''

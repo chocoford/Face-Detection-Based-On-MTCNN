@@ -2,7 +2,11 @@
 from train_models.mtcnn_model import P_Net, cls_ohem, bbox_ohem, landmark_ohem, cal_accuracy
 from train_models.train import train
 import tensorflow as tf
-import os
+import os, sys, time
+import random
+from prepare_data.read_tfrecord_v2 import read_multi_tfrecords,read_single_tfrecord
+tf.enable_eager_execution()
+
 
 def cls_loss(model, x, label):
     cls_prob = tf.squeeze(model(x)[0], [1, 2])
@@ -26,13 +30,19 @@ def loss(model, images, labels, bboxes, landmarks):
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
         loss_value = loss(model, images, labels, bboxes, landmarks)
-        return loss_value, tape.gradient(loss_value, model.trainable_variables)
+    return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
 
 def get_dataset(path, batch_size=256):
+    """
+
+    Return
+    --------------------
+        tuple: (num of samples, dataset)
+    """
     net = "PNet"
     item = 'train_%s_landmark.txt' % net
-    dataset_dir = os.path.join("../data/imglists/PNet", item)
+    dataset_dir = os.path.join(path, item)
 
     imagelist = open(dataset_dir, 'r')
 
@@ -41,7 +51,9 @@ def get_dataset(path, batch_size=256):
     all_image_bboxes = []
     all_image_landmarks = []
 
-    for line in imagelist.readlines():
+    shuffled_lines = imagelist.readlines() 
+    random.shuffle(shuffled_lines)
+    for line in shuffled_lines:
         info = line.strip().split(' ')
         all_image_paths.append(info[0])
         all_image_labels.append(float(info[1]))
@@ -80,12 +92,13 @@ def get_dataset(path, batch_size=256):
     # print(image_label_bbox_landmarks_ds)
 
     ds = image_label_bbox_landmarks_ds.cache()
-    ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=len(all_image_paths)))
+    ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=10000))
+    # ds = ds.repeat()
     ds = ds.batch(batch_size)
     ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     print("get dataset done.")
 
-    return ds
+    return len(all_image_paths), ds
 
 
 def train_PNet(base_dir, prefix, end_epoch, display, lr):
@@ -101,34 +114,52 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
         lr: 学习率
     """
     model = P_Net()
-    train_dataset = get_dataset("")
+    batch_size = 256
+    total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
+
+    display_step = 100
 
     optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
+    #estimate time left
+    now = time.time()
+    pred = now
+
+    print("start training")
     for epoch in range(end_epoch):
         epoch_loss_avg = tf.keras.metrics.Mean()
-        epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
+        # epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
 
-        for input_images, labels, bboxes, landmarks in train_dataset:
+        for i, (input_images, labels, bboxes, landmarks) in enumerate(train_dataset):
+            
             loss_value, grads = grad(model, input_images, labels, bboxes, landmarks)
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
+            # cls_pred = tf.squeeze(model(input_images)[0], [1, 2])
             epoch_loss_avg(loss_value)
-            epoch_accuracy(labels, tf.squeeze(model(input_images)[0], [1, 2])[:, 1])
+            # epoch_accuracy(labels, cls_pred[:, 1])
+            if i % display_step == 0:
+                now = time.time()
+                total_steps = total_num // batch_size
+                remaining_time = (now - pred) * (total_steps - i) // 60
+                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {3} mins. loss_value: {2}".format(i, 
+                                                                                                                    total_steps, 
+                                                                                                                    loss_value.numpy(),
+                                                                                                                    remaining_time))
+                sys.stdout.flush()  
+                pred = now
 
-    if epoch % 50 == 0:
-        print("Epoch %d: Loss: {:.3f}, Accuracy: {:.3f}%", format(epoch, 
-                                                                  epoch_loss_avg.result(), 
-                                                                  epoch_accuracy.result()))
+        # if epoch % 50 == 0:
+        print("Epoch %d: Loss: {:.3f}", format(epoch, epoch_loss_avg.result()))
 
-    # save model
-    checkpoint_dir = "../data/ultramodern_model/PNet"
-    os.makedirs(checkpoint_dir, exist_ok=True)
-    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    root = tf.train.Checkpoint(optimizer=optimizer,
-                               model=model,
-                               optimizer_step=tf.train.get_or_create_global_step)
-    root.save(checkpoint_prefix)
+        # save model
+        checkpoint_dir = "../data/ultramodern_model/PNet"
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+        root = tf.train.Checkpoint(optimizer=optimizer,
+                                model=model,
+                                optimizer_step=tf.train.get_or_create_global_step)
+        root.save(checkpoint_prefix)
 
 if __name__ == '__main__':
     #data path

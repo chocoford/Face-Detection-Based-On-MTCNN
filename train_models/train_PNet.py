@@ -44,7 +44,7 @@ def get_dataset(path, batch_size=256):
     for line in imagelist.readlines():
         info = line.strip().split(' ')
         all_image_paths.append(info[0])
-        all_image_labels.append(int(info[1]))
+        all_image_labels.append(float(info[1]))
         if len(info) == 6:
             all_image_bboxes.append((float(info[2]), float(info[3]), float(info[4]), float(info[5])))
             all_image_landmarks.append((0., 0., 0., 0., 0., 0., 0., 0., 0., 0.))
@@ -114,7 +114,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
             epoch_loss_avg(loss_value)
-            epoch_accuracy(labels, model(input_images)[0][:, 1])
+            epoch_accuracy(labels, tf.squeeze(model(input_images)[0], [1, 2])[:, 1])
 
     if epoch % 50 == 0:
         print("Epoch %d: Loss: {:.3f}, Accuracy: {:.3f}%", format(epoch, 

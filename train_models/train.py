@@ -181,7 +181,7 @@ def train(net_factory, prefix, end_epoch, base_dir, display=200, base_lr=0.01):
     tf.summary.scalar("cls_accuracy",accuracy_op)#cls_acc
     tf.summary.scalar("total_loss",total_loss_op)#cls_loss, bbox loss, landmark loss and L2 loss add together
     summary_op = tf.summary.merge_all()
-    logs_dir = "logs/%s" %(net)
+    logs_dir = "../logs/%s" %(net)
     if os.path.exists(logs_dir) == False:
         os.mkdir(logs_dir)
     writer = tf.summary.FileWriter(logs_dir, sess.graph)
@@ -196,6 +196,8 @@ def train(net_factory, prefix, end_epoch, base_dir, display=200, base_lr=0.01):
     MAX_STEP = int(num / config.BATCH_SIZE + 1) * end_epoch
     epoch = 0
     sess.graph.finalize()
+    tf.train.write_graph(sess.graph, '../', 'model.pbtxt')
+    print("save graph done.")
     try:
         for step in range(MAX_STEP):
             i = i + 1

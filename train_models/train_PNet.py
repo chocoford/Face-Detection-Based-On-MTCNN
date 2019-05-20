@@ -92,7 +92,7 @@ def get_dataset(path, batch_size=256):
     # print(image_label_bbox_landmarks_ds)
 
     ds = image_label_bbox_landmarks_ds.cache()
-    ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=10000))
+    ds = ds.shuffle(buffer_size=10000)
     # ds = ds.repeat()
     ds = ds.batch(batch_size)
     ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
@@ -138,11 +138,12 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
             # cls_pred = tf.squeeze(model(input_images)[0], [1, 2])
             epoch_loss_avg(loss_value)
             # epoch_accuracy(labels, cls_pred[:, 1])
+
             if i % display_step == 0:
                 now = time.time()
                 total_steps = total_num // batch_size
-                remaining_time = (now - pred) * (total_steps - i) // 60
-                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {3} mins. loss_value: {2}".format(i, 
+                remaining_time = (now - pred) * (total_steps - i) / display_step // 60
+                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {3} mins. loss_value: {2}\n".format(i, 
                                                                                                                     total_steps, 
                                                                                                                     loss_value.numpy(),
                                                                                                                     remaining_time))
@@ -150,15 +151,14 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
                 pred = now
 
         # if epoch % 50 == 0:
-        print("Epoch %d: Loss: {:.3f}", format(epoch, epoch_loss_avg.result()))
+        print("Epoch {0}: Loss: {1}".format(epoch, epoch_loss_avg.result()))
 
         # save model
         checkpoint_dir = "../data/ultramodern_model/PNet"
         os.makedirs(checkpoint_dir, exist_ok=True)
         checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
         root = tf.train.Checkpoint(optimizer=optimizer,
-                                model=model,
-                                optimizer_step=tf.train.get_or_create_global_step)
+                                model=model)
         root.save(checkpoint_prefix)
 
 if __name__ == '__main__':

@@ -21,7 +21,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     lr: 学习率
     """
     net_factory = P_Net
-    train(net_factory,prefix, end_epoch, base_dir, display=display, base_lr=lr)
+    train(net_factory,prefix, end_epoch, base_dir, display=display, base_lr=lr) 
 
 if __name__ == '__main__':
     #data path

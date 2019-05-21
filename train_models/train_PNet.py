@@ -26,6 +26,9 @@ def loss(model, images, labels, bboxes, landmarks):
     l_loss = landmark_loss(model, images, landmarks, labels)
     return c_loss + 0.5 * b_loss + 0.5 * l_loss
 
+def multi_loss([pred], [])
+
+
 
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
@@ -117,9 +120,12 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     batch_size = 256
     total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
 
+    optimizer = tf.train.MomentumOptimizer(lr, 0.9)
+
+    model.compile(optimizer, loss=loss)
+
     display_step = 100
 
-    optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
     #estimate time left
     now = time.time()
@@ -160,6 +166,8 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
         root = tf.train.Checkpoint(optimizer=optimizer,
                                 model=model)
         root.save(checkpoint_prefix)
+
+        # model.save
 
 if __name__ == '__main__':
     #data path

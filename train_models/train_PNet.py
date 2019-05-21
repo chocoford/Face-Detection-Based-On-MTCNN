@@ -20,15 +20,31 @@ def landmark_loss(model, x,landmark_target, label):
     landmark_pred = tf.squeeze(model(x)[2], [1, 2])
     return landmark_ohem(landmark_pred, landmark_target, label)
 
+def multi_loss(pred, target):
+    cls_pred, bbox_pred, landmark_pred = pred
+    label, bbox_target, landmark_target = target
+
+    cls_pred = tf.squeeze(cls_pred, [1, 2])
+    bbox_pred = tf.squeeze(bbox_pred, [1, 2])
+    landmark_pred = tf.squeeze(landmark_pred, [1, 2])
+
+    cls_loss = cls_ohem(cls_pred,label)
+    bbox_loss = bbox_ohem(bbox_pred,bbox_target,label)
+    landmark_loss = landmark_ohem(landmark_pred, landmark_target, label)
+
+    return cls_loss + 0.5 * bbox_loss + 0.5 * landmark_loss
+
+def cls_acc(pred, target):
+    cls_pred, _, _ = pred
+    label, _, _ = target
+    cls_pred = tf.squeeze(cls_pred, [1, 2])
+    return cal_accuracy(cls_pred, label)
+
 def loss(model, images, labels, bboxes, landmarks):
     c_loss = cls_loss(model, images, labels)
     b_loss = bbox_loss(model, images, bboxes, labels)
     l_loss = landmark_loss(model, images, landmarks, labels)
     return c_loss + 0.5 * b_loss + 0.5 * l_loss
-
-def multi_loss([pred], [])
-
-
 
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
@@ -86,12 +102,13 @@ def get_dataset(path, batch_size=256):
 
     path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
     # print(path_ds)
-    image_ds = path_ds.map(load_and_preprocess_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    image_ds = path_ds.map(load_and_preprocess_image, num_parallel_calls=tf.data.experimental.AUTOTUNE) 
     label_ds = tf.data.Dataset.from_tensor_slices(all_image_labels)
     bbox_ds = tf.data.Dataset.from_tensor_slices(all_image_bboxes)
     landmark_ds = tf.data.Dataset.from_tensor_slices(all_image_landmarks)
+    target_ds = tf.data.Dataset.zip((label_ds, bbox_ds, landmark_ds))
 
-    image_label_bbox_landmarks_ds = tf.data.Dataset.zip((image_ds, label_ds, bbox_ds, landmark_ds))
+    image_label_bbox_landmarks_ds = tf.data.Dataset.zip((image_ds, target_ds))
     # print(image_label_bbox_landmarks_ds)
 
     ds = image_label_bbox_landmarks_ds.cache()
@@ -120,52 +137,59 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     batch_size = 256
     total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
 
+    callbacks = [tf.keras.callbacks.ModelCheckpoint("../data/ultramodern_model/PNet/pnet.h5",
+                                                    monitor="multi_loss", 
+                                                    save_best_only=True),
+                                                    
+                ]
+
     optimizer = tf.train.MomentumOptimizer(lr, 0.9)
-
-    model.compile(optimizer, loss=loss)
-
-    display_step = 100
+    model.compile(optimizer, loss=multi_loss, metrics=[cls_acc])
+    model.fit(train_dataset, epochs=30, steps_per_epoch=total_num//batch_size, callbacks=callbacks)
 
 
-    #estimate time left
-    now = time.time()
-    pred = now
+    # display_step = 100
 
-    print("start training")
-    for epoch in range(end_epoch):
-        epoch_loss_avg = tf.keras.metrics.Mean()
-        # epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
 
-        for i, (input_images, labels, bboxes, landmarks) in enumerate(train_dataset):
+    # #estimate time left
+    # now = time.time()
+    # pred = now
+
+    # print("start training")
+    # for epoch in range(end_epoch):
+    #     epoch_loss_avg = tf.keras.metrics.Mean()
+    #     # epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
+
+    #     for i, (input_images, labels, bboxes, landmarks) in enumerate(train_dataset):
             
-            loss_value, grads = grad(model, input_images, labels, bboxes, landmarks)
-            optimizer.apply_gradients(zip(grads, model.trainable_variables))
+    #         loss_value, grads = grad(model, input_images, labels, bboxes, landmarks)
+    #         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-            # cls_pred = tf.squeeze(model(input_images)[0], [1, 2])
-            epoch_loss_avg(loss_value)
-            # epoch_accuracy(labels, cls_pred[:, 1])
+    #         # cls_pred = tf.squeeze(model(input_images)[0], [1, 2])
+    #         epoch_loss_avg(loss_value)
+    #         # epoch_accuracy(labels, cls_pred[:, 1])
 
-            if i % display_step == 0:
-                now = time.time()
-                total_steps = total_num // batch_size
-                remaining_time = (now - pred) * (total_steps - i) / display_step // 60
-                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {3} mins. loss_value: {2}\n".format(i, 
-                                                                                                                    total_steps, 
-                                                                                                                    loss_value.numpy(),
-                                                                                                                    remaining_time))
-                sys.stdout.flush()  
-                pred = now
+    #         if i % display_step == 0:
+    #             now = time.time()
+    #             total_steps = total_num // batch_size
+    #             remaining_time = (now - pred) * (total_steps - i) / display_step // 60
+    #             sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {3} mins. loss_value: {2}\n".format(i, 
+    #                                                                                                                 total_steps, 
+    #                                                                                                                 loss_value.numpy(),
+    #                                                                                                                 remaining_time))
+    #             sys.stdout.flush()  
+    #             pred = now
 
-        # if epoch % 50 == 0:
-        print("Epoch {0}: Loss: {1}".format(epoch, epoch_loss_avg.result()))
+    #     # if epoch % 50 == 0:
+    #     print("Epoch {0}: Loss: {1}".format(epoch, epoch_loss_avg.result()))
 
-        # save model
-        checkpoint_dir = "../data/ultramodern_model/PNet"
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-        root = tf.train.Checkpoint(optimizer=optimizer,
-                                model=model)
-        root.save(checkpoint_prefix)
+    #     # save model
+    #     checkpoint_dir = "../data/ultramodern_model/PNet"
+    #     os.makedirs(checkpoint_dir, exist_ok=True)
+    #     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    #     root = tf.train.Checkpoint(optimizer=optimizer,
+    #                             model=model)
+    #     root.save(checkpoint_prefix)
 
         # model.save
 

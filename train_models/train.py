@@ -160,7 +160,7 @@ def train(net_factory, prefix, end_epoch, base_dir, display=200, base_lr=0.01):
     bbox_target = tf.placeholder(tf.float32, shape=[config.BATCH_SIZE, 4], name='bbox_target')
     landmark_target = tf.placeholder(tf.float32,shape=[config.BATCH_SIZE,10],name='landmark_target')
     #get loss and accuracy
-    input_image = image_color_distort(input_image)
+    # input_image = image_color_distort(input_image)
     cls_loss_op,bbox_loss_op,landmark_loss_op,L2_loss_op,accuracy_op = net_factory(input_image, label, bbox_target, landmark_target, training=True)
     #train,update learning rate(3 loss)
     total_loss_op  = radio_cls_loss*cls_loss_op + radio_bbox_loss*bbox_loss_op + radio_landmark_loss*landmark_loss_op + L2_loss_op
@@ -181,7 +181,7 @@ def train(net_factory, prefix, end_epoch, base_dir, display=200, base_lr=0.01):
     tf.summary.scalar("cls_accuracy",accuracy_op)#cls_acc
     tf.summary.scalar("total_loss",total_loss_op)#cls_loss, bbox loss, landmark loss and L2 loss add together
     summary_op = tf.summary.merge_all()
-    logs_dir = "../logs/%s" %(net)
+    logs_dir = "../logs/{0}/{1}".format(net, str(datetime.now())[:10])
     if os.path.exists(logs_dir) == False:
         os.mkdir(logs_dir)
     writer = tf.summary.FileWriter(logs_dir, sess.graph)
@@ -196,7 +196,7 @@ def train(net_factory, prefix, end_epoch, base_dir, display=200, base_lr=0.01):
     MAX_STEP = int(num / config.BATCH_SIZE + 1) * end_epoch
     epoch = 0
     sess.graph.finalize()
-    tf.train.write_graph(sess.graph, '../', 'model.pbtxt')
+    tf.train.write_graph(sess.graph, prefix[:-5], '{}_model.pbtxt'.format(net))
     print("save graph done.")
     try:
         for step in range(MAX_STEP):

@@ -26,7 +26,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
 if __name__ == '__main__':
     #data path
     base_dir = '../DATA/imglists/PNet'
-    model_name = 'MTCNN'
+    model_name = 'MTCNN_no_distort'
     #with landmark
     model_path = '../data/%s_model/PNet_landmark/PNet' % model_name
             

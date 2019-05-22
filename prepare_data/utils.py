@@ -1,4 +1,6 @@
 import numpy as np
+import os
+import cv2
 
 def IoU(box, boxes):
     """Compute IoU between detect box and gt boxes
@@ -56,14 +58,15 @@ def convert_to_square(bbox):
 
 
 
-def load_wider_face_gt_boxes(fpath): 
+def load_wider_face_gt_boxes(fpath, basedir=""): 
     """
     get the information about all groud true of images in wider face datasets.
-    Args:
+    Parameter
+    ---------------------
         fpath: the path of the txt file.
-    Return:
-        num: the gt boxes num.
-        gt_boxes: [x_min, y_min, x_max, y_max]s of all images.
+    Return
+    ---------------------
+        dict:(path:String, gt_boxes:Numpy) gt_boxes: [x_min, y_min, x_max, y_max]s of all images.
     """
     f = open(fpath)
     data = f.read()
@@ -78,11 +81,114 @@ def load_wider_face_gt_boxes(fpath):
         gt_pos = np.zeros((gt_box_num, 4))
         for j, bbox_list in enumerate([x.split(' ')[:4] for x in lines[i+2:i+gt_box_num+2]]):
             gt_pos[j] = [float(x) for x in bbox_list]
-            gt_pos[j, 2] = gt_pos[j, 0] + gt_pos[j, 2] - 1
-            gt_pos[j, 3] = gt_pos[j, 1] + gt_pos[j, 3] - 1
-        gt_data[lines[i]] = gt_pos
+            gt_pos[j, 2] += gt_pos[j, 0] - 1
+            gt_pos[j, 3] += gt_pos[j, 1] - 1
+        gt_data[os.path.join(basedir, lines[i])] = gt_pos
         i += gt_box_num + 2
         if i >= len(lines) - 1: #最后一行有一个换行
             break
     
     return gt_data
+
+
+
+
+def read_annotation(base_dir, label_path):
+    """
+    read label file
+    :param dir: path
+    :return:
+    """
+    data = dict()
+    images = []
+    bboxes = []
+    labelfile = open(label_path, 'r')
+    gt_data = load_wider_face_gt_boxes(label_path)
+    for path, bboxes in gt_data.items():
+        imagepath = base_dir + '/WIDER_train/images/' + path
+        images.append(imagepath)
+
+
+    while True:
+        # image path
+        imagepath = labelfile.readline().strip('\n')
+        if not imagepath:
+            break
+        imagepath = base_dir + '/WIDER_train/images/' + imagepath
+        images.append(imagepath)
+        # face numbers
+        nums = labelfile.readline().strip('\n')
+        # im = cv2.imread(imagepath)
+        # h, w, c = im.shape
+        one_image_bboxes = []
+        for i in range(int(nums) if int(nums) > 0 else 1):
+            # text = ''
+            # text = text + imagepath
+            bb_info = labelfile.readline().strip('\n').split(' ')
+            # only need x, y, w, h
+            face_box = [float(bb_info[i]) for i in range(4)]
+            # text = text + ' ' + str(face_box[0] / w) + ' ' + str(face_box[1] / h)
+            xmin = face_box[0]
+            ymin = face_box[1]
+            xmax = xmin + face_box[2]
+            ymax = ymin + face_box[3]
+            # text = text + ' ' + str(xmax / w) + ' ' + str(ymax / h)
+            one_image_bboxes.append([xmin, ymin, xmax, ymax])
+            # f.write(text + '\n')
+        bboxes.append(one_image_bboxes)
+
+
+    data['images'] = images#all images
+    data['bboxes'] = bboxes#all image bboxes
+    # f.close()
+    return data
+
+def read_and_write_annotation(base_dir, dir):
+    """
+    read label file
+    :param dir: path
+    :return:
+    """
+    data = dict()
+    images = []
+    bboxes = []
+    labelfile = open(dir, 'r')
+    f = open('/home/thinkjoy/data/mtcnn_data/imagelists/train.txt', 'w')
+    while True:
+        # image path
+        imagepath = labelfile.readline().strip('\n')
+        if not imagepath:
+            break
+        imagepath = base_dir + '/WIDER_train/images/' + imagepath
+        images.append(imagepath)
+        # face numbers
+        nums = labelfile.readline().strip('\n')
+        im = cv2.imread(imagepath)
+        h, w, c = im.shape
+        one_image_bboxes = []
+        for i in range(int(nums)):
+            text = ''
+            text = text + imagepath
+            bb_info = labelfile.readline().strip('\n').split(' ')
+            # only need x, y, w, h
+            face_box = [float(bb_info[i]) for i in range(4)]
+            text = text + ' ' + str(face_box[0] / w) + ' ' + str(face_box[1] / h)
+            xmin = face_box[0]
+            ymin = face_box[1]
+            xmax = xmin + face_box[2] - 1
+            ymax = ymin + face_box[3] - 1
+            text = text + ' ' + str(xmax / w) + ' ' + str(ymax / h)
+            one_image_bboxes.append([xmin, ymin, xmax, ymax])
+            f.write(text + '\n')
+        bboxes.append(one_image_bboxes)
+
+
+    data['images'] = images
+    data['bboxes'] = bboxes
+    f.close()
+    return data
+
+def get_path(base_dir, filename):
+    return os.path.join(base_dir, filename)
+
+

@@ -219,21 +219,21 @@ def _activation_summary(x):
     #     landmark_pred_test = tf.squeeze(landmark_pred,axis=0)
     #     return cls_pro_test,bbox_pred_test,landmark_pred_test
         
-def R_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True):
+# def R_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True):
 
-    x = keras.layers.Conv2D(28, (3, 3), activation=prelu, name="conv1")(inputs)
-    x = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")(x)
-    x = keras.layers.Conv2D(48, (3, 3), activation=prelu, name="conv2")(x) 
-    x = keras.layers.MaxPooling2D((3, 3), 2, padding="valid", name="pool2")(x)
-    x = keras.layers.Conv2D(64, (2, 2), activation=prelu, name="conv3")(x)
-    x = keras.layers.Flatten()(x)
-    x = keras.layers.Dense(128, name="fc1")(x)
-    cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")(x)
-    bbox_pred = keras.layers.Dense(4, name="bbox_fc")(x)
-    landmark_pred = keras.layers.Dense(10, name="landmark_fc")(x)
+#     x = keras.layers.Conv2D(28, (3, 3), activation=prelu, name="conv1")(inputs)
+#     x = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")(x)
+#     x = keras.layers.Conv2D(48, (3, 3), activation=prelu, name="conv2")(x) 
+#     x = keras.layers.MaxPooling2D((3, 3), 2, padding="valid", name="pool2")(x)
+#     x = keras.layers.Conv2D(64, (2, 2), activation=prelu, name="conv3")(x)
+#     x = keras.layers.Flatten()(x)
+#     x = keras.layers.Dense(128, name="fc1")(x)
+#     cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")(x)
+#     bbox_pred = keras.layers.Dense(4, name="bbox_fc")(x)
+#     landmark_pred = keras.layers.Dense(10, name="landmark_fc")(x)
 
-    model = keras.models.Model(inputs, [cls_prob, bbox_pred, landmark_pred])
-    print(model.summary())
+#     model = keras.models.Model(inputs, [cls_prob, bbox_pred, landmark_pred])
+#     print(model.summary())
 
     #train
     # if training:
@@ -275,16 +275,6 @@ def O_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True)
     #     return cls_prob,bbox_pred,landmark_pred
 
 
-if __name__ == "__main__":
-    inputs_12 = keras.Input((12, 12 ,3))
-    # labels = keras.Input(())
-    P_Net(inputs_12)
-    inputs_24 = keras.Input((24, 24, 3))
-    R_Net(inputs_24)
-    inputs_48 = keras.Input((48, 48, 3))
-    O_Net(inputs_48)
-
-
 class P_Net(keras.Model):
     def __init__(self):
         super(P_Net, self).__init__(name="P_Net")
@@ -292,13 +282,11 @@ class P_Net(keras.Model):
         self.conv1 = keras.layers.Conv2D(10, (3, 3), activation=prelu, name="conv1")
         self.pool1 = keras.layers.MaxPooling2D((2, 2), name="pool1")
         self.conv2 = keras.layers.Conv2D(16, (3, 3), activation=prelu, name="conv2")
-        self.pool2 = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv3")
+        self.pool2 = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv3") #名字写错了应为conv3
         self.cls_output = keras.layers.Conv2D(2, (1, 1), activation="softmax", name="conv4_1")
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
         self.landmark_pred = keras.layers.Conv2D(10, (1, 1), name="conv4_3")
 
-        # model = keras.models.Model(inputs, [cls_output, bbox_pred, landmark_pred])
-        # print(model.summary())
 
     def call(self, inputs):
         # Define your forward pass here,
@@ -308,3 +296,29 @@ class P_Net(keras.Model):
         x = self.conv2(x)
         x = self.pool2(x)
         return [self.cls_output(x), self.bbox_pred(x), self.landmark_pred(x)]
+
+
+class R_Net(keras.Model):
+    def __init__(self):
+        super(R_Net, self).__init__(name="R_Net")
+        # Define layers here.
+        self.conv1 = keras.layers.Conv2D(28, (3, 3), activation=prelu, name="conv1")
+        self.pool1 = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")
+        self.conv2 = keras.layers.Conv2D(48, (3, 3), activation=prelu, name="conv2")
+        self.pool2 = keras.layers.MaxPooling2D((3, 3), 2, padding="valid", name="pool2")
+        self.conv3 = keras.layers.Conv2D(64, (2, 2), activation=prelu, name="conv3")
+        self.flatten = keras.layers.Flatten()
+        self.cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")
+        self.bbox_pred = keras.layers.Dense(4, name="bbox_fc")
+        self.landmark_pred = keras.layers.Dense(10, name="landmark_fc")
+
+    def call(self, inputs):
+        # Define your forward pass here,
+        # using layers you previously defined (in `__init__`).
+        x = self.conv1(inputs)
+        x = self.pool1(x)
+        x = self.conv2(x)
+        x = self.pool2(x)
+        x = self.conv3(x)
+        x = self.flatten(x)
+        return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]

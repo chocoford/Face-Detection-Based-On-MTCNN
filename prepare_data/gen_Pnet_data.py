@@ -29,12 +29,12 @@ d_idx = 0 # don't care
 idx = 0
 box_idx = 0
 
-gt_boxes = load_wider_face_gt_boxes(anno_file)
+base_dir = "E:/Document/Datasets/Wider Face/WIDER_train/images"
+gt_boxes = load_wider_face_gt_boxes(anno_file, base_dir)
 
 for img_path, gt_boxes_single in gt_boxes.items():
     #load image
-    path = os.path.join("E:/Document/Datasets/Wider Face/WIDER_train/images", img_path)
-    img = cv2.imread(path)
+    img = cv2.imread(img_path)
     idx += 1
     #if idx % 100 == 0:
         #print(idx, "images done")
@@ -71,15 +71,15 @@ for img_path, gt_boxes_single in gt_boxes.items():
 
     #for every bounding boxes
     for box in gt_boxes_single:
-        # box (x_left, y_top, x_right, y_bottom)
+        # gt_box (x_left, y_top, x_right, y_bottom)
         x1, y1, x2, y2 = box
         #gt's width
-        w = x2 - x1 + 1
+        gt_w = x2 - x1 + 1
         #gt's height
-        h = y2 - y1 + 1
+        gt_h = y2 - y1 + 1
 
         # 忽视人脸小于20个像素的和不全在图像里的
-        if max(w, h) < 20 or x1 < 0 or y1 < 0:
+        if max(gt_w, gt_h) < 20 or x1 < 0 or y1 < 0:
             continue
 
         # 在gt附近继续裁剪5张负样本
@@ -91,8 +91,8 @@ for img_path, gt_boxes_single in gt_boxes.items():
             # delta_x and delta_y are offsets of (x1, y1)
             # max can make sure if the delta is a negative number , x1+delta_x >0
             # parameter high of randint make sure there will be intersection between bbox and cropped_box
-            delta_x = npr.randint(max(-size, -x1), w)
-            delta_y = npr.randint(max(-size, -y1), h)
+            delta_x = npr.randint(max(-size, -x1), gt_w)
+            delta_y = npr.randint(max(-size, -y1), gt_h)
             # max here not really necessary
             nx1 = int(max(0, x1 + delta_x))
             ny1 = int(max(0, y1 + delta_y))
@@ -120,22 +120,22 @@ for img_path, gt_boxes_single in gt_boxes.items():
 
         for i in range(20):
             # pos and part face size [minsize*0.8,maxsize*1.25]
-            size = npr.randint(int(min(w, h) * 0.8), np.ceil(1.25 * max(w, h)))
+            size = npr.randint(int(min(gt_w, gt_h) * 0.8), np.ceil(1.25 * max(gt_w, gt_h)))
 
             # delta here is the offset of box center
-            if w<5:
-                print (w)
+            if gt_w<5:
+                print (gt_w)
                 continue
             #print (box)
-            delta_x = npr.randint(-w * 0.2, w * 0.2)
-            delta_y = npr.randint(-h * 0.2, h * 0.2)
+            delta_x = npr.randint(-gt_w * 0.2, gt_w * 0.2)
+            delta_y = npr.randint(-gt_h * 0.2, gt_h * 0.2)
 
-            #show this way: nx1 = max(x1+w/2-size/2+delta_x)
-            # x1+ w/2 is the central point, then add offset , then deduct size/2
-            # deduct size/2 to make sure that the right bottom corner will be out of
-            nx1 = int(max(x1 + w / 2 + delta_x - size / 2, 0))
-            #show this way: ny1 = max(y1+h/2-size/2+delta_y)
-            ny1 = int(max(y1 + h / 2 + delta_y - size / 2, 0))
+            #show this way: nx1 = max(x1+gt_w/2-size/2+delta_x)
+            # x1+ gt_w/2 is the central point, then add offset , then deduct size/2
+            # 这么操作可以保证四个角都有可能在gt_box里或外
+            nx1 = int(max(x1 + gt_w / 2 + delta_x - size / 2, 0))
+            #show this way: ny1 = max(y1+gt_h/2-size/2+delta_y)
+            ny1 = int(max(y1 + gt_h / 2 + delta_y - size / 2, 0))
             nx2 = nx1 + size
             ny2 = ny1 + size
 

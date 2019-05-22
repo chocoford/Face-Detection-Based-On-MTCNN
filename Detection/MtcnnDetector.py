@@ -90,8 +90,14 @@ class MtcnnDetector(object):
                 detect threshold
         Returns:
         -------
-            bbox array
+            bbox array:[x1, y1, x2, y2, score, x1_offset, y1_offset, x2_offset, y2_offset]
+            x and y are the coordinate of base anchor which unsampled from feature map.
+            x和y都是根据特征图反采样得来的坐标，表示特征图这个点表达了原图哪个地方的特征  
+
+            x1_offset and y1_offset are the prediction of PNet.
+            x1_offset和y1_offset都是PNet的预测结果。
         """
+        # 因为只有一个最大池化层，所以反采样只用乘以二就行了
         stride = 2
         # stride = 4
         cellsize = 12
@@ -120,10 +126,14 @@ class MtcnnDetector(object):
     # pre-process images
     def processed_image(self, img, scale):
         '''
-        rescale/resize the image according to the scale
-        :param img: image
-        :param scale:
-        :return: resized image
+            rescale/resize the image according to the scale by multiply width and height with scale
+        Parameter
+        ----------------------
+            img: image
+            scale: float
+        Return
+        --------------------
+            resized image
         '''
         height, width, channels = img.shape
         new_height = int(height * scale)  # resized new height
@@ -205,7 +215,6 @@ class MtcnnDetector(object):
         boxes_c: numpy array n x 5 [x1, y1, x2, y2, score]
             boxes after calibration
         """
-        h, w, c = im.shape
         net_size = 12
 
         current_scale = float(net_size) / self.min_face_size 
@@ -404,7 +413,7 @@ class MtcnnDetector(object):
 
         return boxes_c, landmark
 
-    def detect_face(self, test_data, pnet_detections=None, rnet_detections=None):
+    def detect_face(self, imgs_path, pnet_detections=None, rnet_detections=None):
         all_boxes = []  # save each image's bboxes
         landmarks = []
         # batch_idx = 0
@@ -413,25 +422,25 @@ class MtcnnDetector(object):
         t1_sum = 0
         t2_sum = 0
         t3_sum = 0
-        num_of_img = test_data.size #12880
+        num_of_img = len(imgs_path) #12880
         empty_array = np.array([])
         # test_data is iter_
         s_time = time.time()
-        for batch_idx, databatch in enumerate(test_data):
+        for i, img_path in enumerate(imgs_path):
             # databatch就是一张图片
-            if batch_idx % 100 == 0 and batch_idx > 0:
+            if i % 100 == 0 and i > 0:
                 c_time = (time.time() - s_time )/100
-                print("%d out of %d images done" % (batch_idx ,test_data.size))
+                print("%d out of %d images done" % (i ,num_of_img))
                 print('%f seconds for each image' % c_time)
                 s_time = time.time()
 
 
-            im = databatch
+            im = cv2.imread(img_path)
             # pnet
             if self.pnet_detector and pnet_detections is None: # detector[0]
                 st = time.time()
                 # ignore landmark
-                boxes, boxes_c, landmark = self.detect_pnet(im)
+                _, boxes_c, landmark = self.detect_pnet(im)
 
                 t1 = time.time() - st
                 sum_time += t1
@@ -448,7 +457,7 @@ class MtcnnDetector(object):
             # rnet
             if self.rnet_detector and rnet_detections is None:
                 if pnet_detections is not None:
-                    boxes_c = pnet_detections[batch_idx]
+                    boxes_c = pnet_detections[i]
                     if boxes_c == empty_array:
                         continue
                 t = time.time()
@@ -466,7 +475,7 @@ class MtcnnDetector(object):
             # onet
             if self.onet_detector:
                 if rnet_detections is not None:
-                    boxes_c = rnet_detections[batch_idx]
+                    boxes_c = rnet_detections[i]
                     if boxes_c == empty_array:
                         continue
                 t = time.time()

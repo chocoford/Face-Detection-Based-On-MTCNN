@@ -19,8 +19,7 @@ from prepare_data.loader import TestLoader
 from Detection.detector import Detector
 from Detection.fcn_detector import FcnDetector
 from Detection.MtcnnDetector import MtcnnDetector
-from utils import *
-from prepare_data.data_utils import *
+from prepare_data.utils import load_wider_face_gt_boxes, IoU, get_path
 #net : 24(RNet)/48(ONet)
 #data: dict()
 def save_hard_example(net, data,save_path):
@@ -152,10 +151,7 @@ def t_net(prefix, epoch,
     model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
     print(model_path[0])
     # load pnet model
-    if slide_window:
-        PNet = Detector(P_Net, 12, batch_size[0], model_path[0])
-    else:
-        PNet = FcnDetector(P_Net, model_path[0])
+    PNet = FcnDetector(P_Net, model_path[0])
     detectors[0] = PNet
 
     # load rnet model
@@ -179,11 +175,11 @@ def t_net(prefix, epoch,
         print("load rnet predictions done.")
         
     # detec的数据源始终是一样的
-    basedir = 'E:/Document/Datasets/Wider Face'
+    basedir = 'E:/Document/Datasets/Wider Face/WIDER_train/images'
     #anno_file
     filename = 'wider_face_train_bbx_gt.txt'
     #data是一个dict，data["images"]为所有照片路径list，data["bboxes"]是所有照片bboxes的值，一一对应
-    data = read_annotation(basedir,filename)
+
     # 初始化mtcnn_detector，就是训练好的模型
     mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
                                    stride=stride, threshold=thresh, slide_window=slide_window)
@@ -192,12 +188,13 @@ def t_net(prefix, epoch,
     # imdb = IMDB("wider", image_set, root_path, dataset_path, 'test')
     # gt_imdb = imdb.gt_imdb()
     print('load test data')
-    #所有照片，训练时为12880张
-    test_data = TestLoader(data['images'])
+    #创建一个枚举器，在每次枚举的时候再从磁盘中加载图片
+    # test_data = TestLoader(data.keys)
+    data = load_wider_face_gt_boxes(filename, basedir) 
     print ('finish loading')
     #list
     print ('start detecting....')
-    detections,_ = mtcnn_detector.detect_face(test_data, pnet_detections, rnet_detections) #调用训练好的pnet，返回的是candidate
+    detections,_ = mtcnn_detector.detect_face(data.keys, pnet_detections, rnet_detections) #调用训练好的pnet，返回的是candidate
     print ('finish detecting ')
     save_net = 'RNet'
     if test_mode == "PNet":

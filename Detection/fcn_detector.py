@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 import sys, os
 sys.path.append("../")
 from train_models.MTCNN_config import config
@@ -22,9 +23,13 @@ class FCNDetector(object):
     def predict(self, databatch):
         # height, width, _ = databatch.shape
         # print(height, width)
+        databatch = np.expand_dims(databatch, axis=0)
         pred = self.model.predict(databatch)
-        print(pred)
-        # return cls_prob, bbox_pred
+        cls_prob, bbox_pred, _ = pred
+        assert(cls_prob.shape[3]==2 and bbox_pred.shape[3]==4)
+        cls_prob = np.squeeze(cls_prob, axis=0)
+        bbox_pred = np.squeeze(bbox_pred, axis=0)
+        return cls_prob, bbox_pred
 
 
 class FcnDetector(object):

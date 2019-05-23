@@ -246,23 +246,23 @@ def _activation_summary(x):
     # else:
     #     return cls_prob,bbox_pred,landmark_pred
     
-def O_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True):
+# def O_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True):
 
-    x = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv1")(inputs)
-    x = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")(x)
-    x = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv2")(x) 
-    x = keras.layers.MaxPooling2D((3, 3), 2, name="pool2")(x)
-    x = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv3")(x) 
-    x = keras.layers.MaxPooling2D((2, 2), 2, padding="same", name="pool3")(x)
-    x = keras.layers.Conv2D(128, (2, 2), activation=prelu, name="conv4")(x)
-    x = keras.layers.Flatten()(x)
-    x = keras.layers.Dense(256, name="fc1")(x)
-    cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")(x)
-    bbox_pred = keras.layers.Dense(4, name="bbox_fc")(x)
-    landmark_pred = keras.layers.Dense(10, name="landmark_fc")(x)
+#     x = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv1")(inputs)
+#     x = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")(x)
+#     x = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv2")(x) 
+#     x = keras.layers.MaxPooling2D((3, 3), 2, name="pool2")(x)
+#     x = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv3")(x) 
+#     x = keras.layers.MaxPooling2D((2, 2), 2, padding="same", name="pool3")(x)
+#     x = keras.layers.Conv2D(128, (2, 2), activation=prelu, name="conv4")(x)
+#     x = keras.layers.Flatten()(x)
+#     x = keras.layers.Dense(256, name="fc1")(x)
+#     cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")(x)
+#     bbox_pred = keras.layers.Dense(4, name="bbox_fc")(x)
+#     landmark_pred = keras.layers.Dense(10, name="landmark_fc")(x)
 
-    model = keras.models.Model(inputs, [cls_prob, bbox_pred, landmark_pred])
-    print(model.summary())
+#     model = keras.models.Model(inputs, [cls_prob, bbox_pred, landmark_pred])
+#     print(model.summary())
     #train
     # if training:
     #     cls_loss = cls_ohem(cls_prob,label)
@@ -308,6 +308,7 @@ class R_Net(keras.Model):
         self.pool2 = keras.layers.MaxPooling2D((3, 3), 2, padding="valid", name="pool2")
         self.conv3 = keras.layers.Conv2D(64, (2, 2), activation=prelu, name="conv3")
         self.flatten = keras.layers.Flatten()
+        self.fc1 = keras.layers.Dense(128, name="fc1")
         self.cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")
         self.bbox_pred = keras.layers.Dense(4, name="bbox_fc")
         self.landmark_pred = keras.layers.Dense(10, name="landmark_fc")
@@ -321,4 +322,38 @@ class R_Net(keras.Model):
         x = self.pool2(x)
         x = self.conv3(x)
         x = self.flatten(x)
+        x = self.fc1(x)
+        return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]
+
+
+class O_Net(keras.Model):
+    def __init__(self):
+        super(O_Net, self).__init__(name="O_Net")
+        # Define layers here.
+        self.conv1 = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv1")
+        self.pool1 = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")
+        self.conv2 = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv2")
+        self.pool2 = keras.layers.MaxPooling2D((3, 3), 2, name="pool2")
+        self.conv3 = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv3")
+        self.pool3 = keras.layers.MaxPooling2D((2, 2), 2, padding="same", name="pool3")
+        self.conv4 = keras.layers.Conv2D(128, (2, 2), activation=prelu, name="conv4")
+        self.flatten = keras.layers.Flatten()
+        self.fc1 = keras.layers.Dense(256, name="fc1")
+        self.cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")
+        self.bbox_pred = keras.layers.Dense(4, name="bbox_fc")
+        self.landmark_pred = keras.layers.Dense(10, name="landmark_fc")
+
+
+    def call(self, inputs):
+        # Define your forward pass here,
+        # using layers you previously defined (in `__init__`).
+        x = self.conv1(inputs)
+        x = self.pool1(x)
+        x = self.conv2(x)
+        x = self.pool2(x)
+        x = self.conv3(x)
+        x = self.pool3(x)
+        x = self.conv4(x)
+        x = self.flatten(x)
+        x = self.fc1(x)
         return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]

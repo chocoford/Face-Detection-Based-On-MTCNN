@@ -440,7 +440,7 @@ class MtcnnDetector(object):
             if self.pnet_detector and pnet_detections is None: # detector[0]
                 st = time.time()
                 # ignore landmark
-                _, boxes_c, landmark = self.detect_pnet(im)
+                _, boxes_c, _ = self.detect_pnet(im)
 
                 t1 = time.time() - st
                 sum_time += t1
@@ -462,7 +462,7 @@ class MtcnnDetector(object):
                         continue
                 t = time.time()
                 # ignore landmark
-                boxes, boxes_c, landmark = self.detect_rnet(im, boxes_c)
+                _, boxes_c, _ = self.detect_rnet(im, boxes_c)
                 t2 = time.time() - t
                 sum_time += t2
                 t2_sum += t2
@@ -479,7 +479,7 @@ class MtcnnDetector(object):
                     if boxes_c == empty_array:
                         continue
                 t = time.time()
-                boxes, boxes_c, landmark = self.detect_onet(im, boxes_c)
+                _, boxes_c, landmark = self.detect_onet(im, boxes_c)
                 t3 = time.time() - t
                 sum_time += t3
                 t3_sum += t3
@@ -490,8 +490,8 @@ class MtcnnDetector(object):
                     continue
 
             all_boxes.append(boxes_c)
-            # landmark = [1]
-            landmarks.append(landmark)
+            landmark = [1]
+            # landmarks.append(landmark)
 
             
         print('num of images', num_of_img)

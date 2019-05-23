@@ -6,7 +6,6 @@ import tensorflow as tf
 import time, os, sys
 tf.enable_eager_execution()
 
-
 def cls_loss(model, x, label):
     cls_prob = model(x)[0]
     return cls_ohem(cls_prob,label)
@@ -21,7 +20,6 @@ def landmark_loss(model, x,landmark_target, label):
 
 
 def cls_acc(cls_pred, labels):
-    cls_pred = cls_pred
     return cal_accuracy(cls_pred, labels)
 
 

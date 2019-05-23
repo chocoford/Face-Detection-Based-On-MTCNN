@@ -3,28 +3,25 @@ import sys
 sys.path.append('..')
 from Detection.MtcnnDetector import MtcnnDetector
 from Detection.detector import Detector
-from Detection.fcn_detector import FcnDetector
+from Detection.fcn_detector import FCNDetector
 from train_models.mtcnn_model import P_Net, R_Net, O_Net
 from prepare_data.loader import TestLoader
 import cv2
 import os
 import numpy as np
-test_mode = "ONet"
+test_mode = "PNet"
 thresh = [0.6, 0.7, 0.7]
 min_face_size = 20
 stride = 2
 slide_window = False
 shuffle = False
 detectors = [None, None, None]
-prefix = ['data/MTCNN_model/PNet_landmark/PNet', 'data/MTCNN_model/RNet_landmark/RNet', 'data/MTCNN_model/ONet_landmark/ONet']
-epoch = [30, 22, 22]
+prefix = ['data/ultramodern_model/PNet', 'data/ultramodern_model/RNet', 'data/ultramodern_model/ONet']
+epoch = [1, 22, 22]
 batch_size = [2048, 64, 16]
 model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
 # load pnet model
-if slide_window:
-    PNet = Detector(P_Net, 12, batch_size[0], model_path[0])
-else:
-    PNet = FcnDetector(P_Net, model_path[0])
+PNet = FCNDetector(P_Net, model_path[0])
 detectors[0] = PNet
 
 # load rnet model
@@ -39,23 +36,23 @@ if test_mode == "ONet":
 
 mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
                                stride=stride, threshold=thresh, slide_window=slide_window)
-gt_imdb = []
+test_img_path = []
 path = "test/test images"
 for item in os.listdir(path):
-    gt_imdb.append(os.path.join(path,item))
-test_data = TestLoader(gt_imdb)
+    test_img_path.append(os.path.join(path,item))
+# test_data = TestLoader(gt_imdb)
 
 
-all_boxes,landmarks = mtcnn_detector.detect_face(test_data)
+all_boxes,landmarks = mtcnn_detector.detect_face(test_img_path)
 
 count = 0
-for imagepath in gt_imdb:
+for imagepath in test_img_path:
     print(imagepath)
     image = cv2.imread(imagepath)
     for bbox in all_boxes[count]:
         # if bbox[4] < 0.92:
         #     continue
-        cv2.putText(image, str(np.round(bbox[4],2)), (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_TRIPLEX, 1, color=(255,0,255), 4)
+        cv2.putText(image, str(np.round(bbox[4],2)), (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_TRIPLEX, 1, color=(255,0,255))
         cv2.rectangle(image, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])),(0,0,255), 5)
         if bbox[0] < 0:
             print("there is a bbox[0] < 0", bbox[0])

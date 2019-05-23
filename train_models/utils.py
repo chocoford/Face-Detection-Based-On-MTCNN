@@ -1,8 +1,11 @@
 import os, random
 import tensorflow as tf
+import time, sys, os
 
 def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
     """
+    get all info from merged imglist and shuffle it.  
+    获取所有合并了的训练图片信息并且打乱
     Parameter
     --------------------
         path: path of data source.
@@ -14,6 +17,16 @@ def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
         tuple: (num of samples, dataset)
     """
     net = path[-4:]
+    if net == "PNet":
+        size = 12
+    elif net == "RNet":
+        size = 24
+    elif net == "ONet":
+        size = 48
+    else:
+        print("unknown net: ", net)
+        exit(-1)
+
     item = 'train_%s_landmark.txt' % net
     dataset_dir = os.path.join(path, item)
 
@@ -45,11 +58,11 @@ def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
             print("unknown label.")
             exit(-1)
     print("There are {} pos samples, {} neg samples, {} part samples and {} landmark samples \
-        before keeping ratios. {} samples in total".format(len(pos_lines),
-                                                           len(neg_lines), 
-                                                           len(part_lines), 
-                                                           len(landmark_lines),
-                                                           len(lines)))
+before keeping ratios. {} samples in total".format(len(pos_lines),
+                                                   len(neg_lines), 
+                                                   len(part_lines), 
+                                                   len(landmark_lines),
+                                                   len(lines)))
     base_num = min(len(pos_lines), len(neg_lines), len(part_lines), len(landmark_lines))
     pos_num = ratios[0] * base_num
     neg_num = ratios[1] * base_num
@@ -82,15 +95,15 @@ def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
             all_image_landmarks.append((0., 0., 0., 0., 0., 0., 0., 0., 0., 0.))
 
     print("There are {} pos samples, {} neg samples, {} part samples and {} landmark samples \
-        after keeping ratios. {} samples in total".format(all_image_labels.count(1), 
-                                                          all_image_labels.count(0), 
-                                                          all_image_labels.count(-1), 
-                                                          all_image_labels.count(-2),
-                                                          len(shuffled_lines)))
+after keeping ratios. {} samples in total".format(all_image_labels.count(1), 
+                                                  all_image_labels.count(0), 
+                                                  all_image_labels.count(-1), 
+                                                  all_image_labels.count(-2),
+                                                  len(shuffled_lines)))
 
     def preprocess_image(image):
         image = tf.image.decode_jpeg(image, channels=3)
-        image = tf.image.resize(image, [12, 12])
+        image = tf.image.resize(image, [size, size])
         image /= 255.0  # normalize to [0,1] range
         return image
 
@@ -118,6 +131,62 @@ def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
     print("get dataset done.")
 
     return len(all_image_paths), ds
+
+
+def train(model_class, base_dir, checkpoint_dir, grad, batch_size=256, end_epoch=100, display_step=100, lr=0.001):
+
+    model = model_class()
+    total_num, train_dataset = get_dataset(base_dir, batch_size=batch_size)
+    optimizer = tf.train.MomentumOptimizer(lr, 0.9)
+
+
+    # prepare for save
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    root = tf.train.Checkpoint(optimizer=optimizer, model=model)
+
+    now = time.time()
+    pred = now
+
+    print("start training")
+    for epoch in range(end_epoch):
+        epoch_loss_avg = tf.keras.metrics.Mean()
+        epoch_accuracy_avg = tf.keras.metrics.Mean()
+
+        for i, train_batch in enumerate(train_dataset):
+            images, target_batch = train_batch
+            labels, bboxes, landmarks = target_batch
+            loss_value, grads = grad(model, images, labels, bboxes, landmarks)
+            optimizer.apply_gradients(zip(grads, model.trainable_variables))
+
+            acc_value = cls_acc(model(images)[0], labels)
+
+            epoch_loss_avg(loss_value)
+            epoch_accuracy_avg(acc_value)
+
+            if i % display_step == 0:
+                now = time.time()
+                total_steps = total_num // batch_size
+                remaining_time = (now - pred) * (total_steps - i) / display_step // 60
+                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {2} mins. loss_value: {3} acc: {4}".format(i, 
+                                                                                                                                   total_steps, 
+                                                                                                                                   remaining_time,
+                                                                                                                                   loss_value.numpy(),
+                                                                                                                                   acc_value.numpy()))
+                sys.stdout.flush()  
+                pred = now
+
+        print("\rEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
+
+        # save model
+        save_path = root.save(checkpoint_prefix)
+        print("save prefix is {}".format(save_path))
+
+
+
+
+
+
 
 
 if __name__ == "__main__":

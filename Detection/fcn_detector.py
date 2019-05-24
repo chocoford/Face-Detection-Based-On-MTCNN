@@ -13,10 +13,10 @@ class FCNDetector(object):
     def __init__(self, net_factory, model_path):
 
         self.model = P_Net()
-        optimizer = tf.train.MomentumOptimizer(0.001, 0.9)
+        # optimizer = tf.train.MomentumOptimizer(0.001, 0.9)
         checkpoint_dir = model_path
         checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-        root = tf.train.Checkpoint(optimizer=optimizer, model=self.model)
+        root = tf.train.Checkpoint(model=self.model)
         root.restore(tf.train.latest_checkpoint(checkpoint_prefix))
 
 

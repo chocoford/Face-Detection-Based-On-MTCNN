@@ -1,5 +1,7 @@
 import os, random
 import tensorflow as tf
+import cv2
+import numpy as np
 import time, sys, os
 
 def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
@@ -184,6 +186,38 @@ def train(model_class, base_dir, checkpoint_dir, grad, batch_size=256, end_epoch
 
 
 
+def random_flip_images(image_batch,label_batch,landmark_batch):
+    """
+        for each batch, do flip or not flip operation randomly for data augment.
+    Return
+    --------------
+        image_batch, landmark_batch
+    """
+    if random.choice([0,1]) > 0:
+        fliplandmarkindexes = np.where(label_batch==-2)[0]
+        flipposindexes = np.where(label_batch==1)[0]
+        #only flip
+        flipindexes = np.concatenate((fliplandmarkindexes,flipposindexes))
+        # horizontal flip
+        for i in flipindexes:
+            cv2.flip(image_batch[i],1,image_batch[i])        
+        
+        #pay attention: flip landmark    
+        for i in fliplandmarkindexes:
+            landmark_ = landmark_batch[i].reshape((-1,2))
+            landmark_ = np.asarray([(1-x, y) for (x, y) in landmark_])
+            landmark_[[0, 1]] = landmark_[[1, 0]]#left eye<->right eye
+            landmark_[[3, 4]] = landmark_[[4, 3]]#left mouth<->right mouth        
+            landmark_batch[i] = landmark_.ravel()
+        
+    return image_batch,landmark_batch
+
+def image_color_distort(inputs):
+    inputs = tf.image.random_contrast(inputs, lower=0.5, upper=1.5)
+    inputs = tf.image.random_brightness(inputs, max_delta=0.2)
+    inputs = tf.image.random_hue(inputs,max_delta= 0.2)
+    inputs = tf.image.random_saturation(inputs,lower = 0.5, upper= 1.5)
+    return inputs
 
 
 

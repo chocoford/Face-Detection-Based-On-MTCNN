@@ -19,19 +19,19 @@ detectors = [None, None, None]
 prefix = ['data/ultramodern_model/PNet', 'data/ultramodern_model/RNet', 'data/ultramodern_model/ONet']
 epoch = [1, 22, 22]
 batch_size = [2048, 64, 16]
-model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
+# model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
 # load pnet model
-PNet = FCNDetector(P_Net, model_path[0])
+PNet = FCNDetector(P_Net, prefix[0])
 detectors[0] = PNet
 
 # load rnet model
 if test_mode in ["RNet", "ONet"]:
-    RNet = Detector(R_Net, 24, batch_size[1], model_path[1])
+    RNet = Detector(R_Net, 24, batch_size[1], prefix[1])
     detectors[1] = RNet
 
 # load onet model
 if test_mode == "ONet":
-    ONet = Detector(O_Net, 48, batch_size[2], model_path[2])
+    ONet = Detector(O_Net, 48, batch_size[2], prefix[2])
     detectors[2] = ONet
 
 mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,

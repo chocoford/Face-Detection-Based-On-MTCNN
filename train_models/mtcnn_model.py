@@ -282,7 +282,7 @@ class P_Net(keras.Model):
         self.conv1 = keras.layers.Conv2D(10, (3, 3), activation=prelu, name="conv1")
         self.pool1 = keras.layers.MaxPooling2D((2, 2), name="pool1")
         self.conv2 = keras.layers.Conv2D(16, (3, 3), activation=prelu, name="conv2")
-        self.pool2 = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv3") #名字写错了应为conv3
+        self.conv3 = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv3") 
         self.cls_output = keras.layers.Conv2D(2, (1, 1), activation="softmax", name="conv4_1")
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
         self.landmark_pred = keras.layers.Conv2D(10, (1, 1), name="conv4_3")
@@ -294,7 +294,7 @@ class P_Net(keras.Model):
         x = self.conv1(inputs)
         x = self.pool1(x)
         x = self.conv2(x)
-        x = self.pool2(x)
+        x = self.conv3(x)
         return [self.cls_output(x), self.bbox_pred(x), self.landmark_pred(x)]
 
 

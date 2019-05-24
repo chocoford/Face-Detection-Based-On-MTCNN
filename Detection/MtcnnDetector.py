@@ -446,7 +446,7 @@ class MtcnnDetector(object):
                 sum_time += t1
                 t1_sum += t1
                 if boxes_c is None:
-                    print("boxes_c is None...")
+                    print("pnet: boxes_c is None...")
                     all_boxes.append(empty_array)
                     # pay attention
                     landmarks.append(empty_array)
@@ -467,6 +467,7 @@ class MtcnnDetector(object):
                 sum_time += t2
                 t2_sum += t2
                 if boxes_c is None:
+                    print("rnet: boxes_c is None...")
                     all_boxes.append(empty_array)
                     landmarks.append(empty_array)
 
@@ -484,6 +485,7 @@ class MtcnnDetector(object):
                 sum_time += t3
                 t3_sum += t3
                 if boxes_c is None:
+                    print("onet: boxes_c is None...")
                     all_boxes.append(empty_array)
                     landmarks.append(empty_array)
 

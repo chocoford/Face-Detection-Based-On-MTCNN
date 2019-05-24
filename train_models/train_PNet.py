@@ -1,24 +1,23 @@
 #coding:utf-8
 from train_models.mtcnn_model import P_Net, cls_ohem, bbox_ohem, landmark_ohem, cal_accuracy
-from train_models.train import train
+from train_models.utils import image_color_distort, random_flip_images
 import tensorflow as tf
 import os, sys, time
 import random
-from prepare_data.read_tfrecord_v2 import read_multi_tfrecords,read_single_tfrecord
 from train_models.utils import get_dataset
 tf.enable_eager_execution()
 
 
-def cls_loss(model, x, label):
-    cls_prob = tf.squeeze(model(x)[0], [1, 2])
+def cls_loss(pred, label):
+    cls_prob = tf.squeeze(pred, [1, 2])
     return cls_ohem(cls_prob,label)
 
-def bbox_loss(model, x, bbox_target, label):
-    bbox_pred = tf.squeeze(model(x)[1], [1, 2])
+def bbox_loss(pred, bbox_target, label):
+    bbox_pred = tf.squeeze(pred, [1, 2])
     return bbox_ohem(bbox_pred,bbox_target,label)
 
-def landmark_loss(model, x,landmark_target, label):
-    landmark_pred = tf.squeeze(model(x)[2], [1, 2])
+def landmark_loss(pred, landmark_target, label):
+    landmark_pred = tf.squeeze(pred, [1, 2])
     return landmark_ohem(landmark_pred, landmark_target, label)
 
 def multi_loss(pred, target):
@@ -43,9 +42,10 @@ def cls_acc(cls_pred, labels):
 
 
 def loss(model, images, labels, bboxes, landmarks):
-    c_loss = cls_loss(model, images, labels)
-    b_loss = bbox_loss(model, images, bboxes, labels)
-    l_loss = landmark_loss(model, images, landmarks, labels)
+    pred = model(images)
+    c_loss = cls_loss(pred[0], labels)
+    b_loss = bbox_loss(pred[1], bboxes, labels)
+    l_loss = landmark_loss(pred[2], landmarks, labels)
     return c_loss + 0.5 * b_loss + 0.5 * l_loss
 
 def grad(model, images, labels, bboxes, landmarks):
@@ -68,7 +68,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
         lr: 学习率
     """
     model = P_Net()
-    batch_size = 256
+    batch_size = 512
     total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
 
     # callbacks = [tf.keras.callbacks.ModelCheckpoint("../data/ultramodern_model/PNet/pnet.h5",
@@ -88,7 +88,10 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
 
     # model.compile(optimizer, loss=multi_loss, metrics=[cls_acc])
     # model.fit(train_dataset, epochs=30, steps_per_epoch=total_num//batch_size, callbacks=callbacks)
-
+    checkpoint_dir = prefix
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    root = tf.train.Checkpoint(optimizer=optimizer, model=model, optimizer_step=tf.train.get_or_create_global_step()) 
 
     display_step = 100
 
@@ -104,8 +107,10 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
         for i, train_batch in enumerate(train_dataset):
             images, target_batch = train_batch
             labels, bboxes, landmarks = target_batch
+            images = image_color_distort(images)
+            # images, landmarks = random_flip_images(images, labels, landmarks)
             loss_value, grads = grad(model, images, labels, bboxes, landmarks)
-            optimizer.apply_gradients(zip(grads, model.trainable_variables))
+            optimizer.apply_gradients(zip(grads, model.trainable_variables), global_step=tf.train.get_or_create_global_step())
 
             acc_value = cls_acc(model(images)[0], labels)
 
@@ -127,10 +132,6 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
         print("\rEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
 
         # save model
-        checkpoint_dir = prefix
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-        root = tf.train.Checkpoint(optimizer=optimizer, model=model)
         save_path = root.save(checkpoint_prefix)
         print("save prefix is {}".format(save_path))
 

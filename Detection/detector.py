@@ -19,9 +19,7 @@ class Detector(object):
         self.batch_size = batch_size
     #rnet and onet minibatch(test)
     def predict(self, databatch):
-
         predictions = self.model.predict(databatch)
-        print(predictions)
         cls_prob, bbox_pred, landmark_pred = predictions
         return cls_prob, bbox_pred, landmark_pred
 

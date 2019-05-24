@@ -7,6 +7,7 @@ num_keep_radio = 0.7
 #define prelu
 def prelu(inputs):
     alphas = tf.get_variable("alphas", shape=inputs.get_shape()[-1], dtype=tf.float32, initializer=tf.constant_initializer(0.25))
+    print(alphas)
     pos = tf.nn.relu(inputs)
     neg = alphas * (inputs-abs(inputs))*0.5
     return pos + neg
@@ -329,3 +330,7 @@ def O_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True)
             return cls_loss,bbox_loss,landmark_loss,L2_loss,accuracy
         else:
             return cls_prob,bbox_pred,landmark_pred
+
+if __name__ == "__main__":
+    input_image = tf.placeholder(tf.float32, shape=[384, 12, 12, 3], name='input_image')
+    P_Net(input_image)

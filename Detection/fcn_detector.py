@@ -11,11 +11,8 @@ class FCNDetector(object):
         用于全卷积网络的检测器
     """
     def __init__(self, net_factory, model_path):
-
-        self.model = P_Net()
-        # optimizer = tf.train.MomentumOptimizer(0.001, 0.9)
-        checkpoint_dir = model_path
-        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+        self.model = net_factory()
+        checkpoint_prefix = os.path.join(model_path, "ckpt")
         root = tf.train.Checkpoint(model=self.model)
         root.restore(tf.train.latest_checkpoint(checkpoint_prefix))
 

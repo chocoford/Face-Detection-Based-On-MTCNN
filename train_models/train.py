@@ -63,7 +63,10 @@ def random_flip_images(image_batch,label_batch,landmark_batch):
 '''
 # all mini-batch mirror
 def random_flip_images(image_batch,label_batch,landmark_batch):
-    #mirror
+    """
+    random filp all images in one batch
+    随机翻转整个batch的图片和信息
+    """
     if random.choice([0,1]) > 0:
         num_images = image_batch.shape[0]
         fliplandmarkindexes = np.where(label_batch==-2)[0]

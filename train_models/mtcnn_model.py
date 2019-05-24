@@ -10,12 +10,10 @@ num_keep_radio = 0.7
 
 #define prelu
 def prelu(inputs):
-    # alphas = tf.get_variable("alphas", shape=inputs.get_shape()[-1], dtype=tf.float32, initializer=tf.constant_initializer(0.25))
-    # pos = tf.nn.relu(inputs)
-    # neg = alphas * (inputs-abs(inputs))*0.5
-    # return pos + neg
+    with tf.variable_scope("prelu", reuse=tf.AUTO_REUSE):
+        alphas = tf.get_variable("alphas", shape=inputs.get_shape()[-1], dtype=tf.float32, initializer=tf.constant_initializer(0.25))
     # inputs.get_shape()[-1]
-    alphas = 0.25
+    # alphas = 0.25
     pos = tf.nn.relu(inputs)
     neg = alphas * (inputs-abs(inputs))*0.5
     return pos + neg
@@ -179,102 +177,6 @@ def _activation_summary(x):
     #tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
 
 
-#construct Pnet
-#label:batch
-# def P_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True):
-
-#     x = keras.layers.Conv2D(10, (3, 3), activation=prelu, name="conv1")(inputs)
-#     x = keras.layers.MaxPooling2D((2, 2), name="pool1")(x)
-#     x = keras.layers.Conv2D(16, (3, 3), activation=prelu, name="conv2")(x)
-#     x = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv3")(x)
-#     cls_output = keras.layers.Conv2D(2, (1, 1), activation="softmax", name="conv4_1")(x)
-#     bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")(x)
-#     landmark_pred = keras.layers.Conv2D(10, (1, 1), name="conv4_3")(x)
-
-#     model = keras.models.Model(inputs, [cls_output, bbox_pred, landmark_pred])
-#     print(model.summary())
-
-    # add projectors for visualization
-    # if training:
-    #     #batch*2
-    #     # calculate classification loss
-    #     cls_prob = tf.squeeze(cls_output,[1,2],name='cls_prob') #conv4_1：[384, 1, 1, 2] ---squeeze--> [384, 2]
-    #     cls_loss = cls_ohem(cls_prob,label)
-    #     #batch
-    #     # cal bounding box error, squared sum error
-    #     bbox_pred = tf.squeeze(bbox_pred,[1,2],name='bbox_pred') #bbox_pred: [384, 1, 1, 4] ---squeeze--> [384, 4]
-    #     bbox_loss = bbox_ohem(bbox_pred,bbox_target,label)
-    #     #batch*10
-    #     landmark_pred = tf.squeeze(landmark_pred,[1,2],name="landmark_pred")
-    #     landmark_loss = landmark_ohem(landmark_pred,landmark_target,label)
-
-    #     accuracy = cal_accuracy(cls_prob,label)
-    #     L2_loss = tf.add_n(slim.losses.get_regularization_losses())
-    #     return cls_loss,bbox_loss,landmark_loss,L2_loss,accuracy
-    # #test
-    # else:
-    #     #when test,batch_size = 1
-    #     cls_pro_test = tf.squeeze(cls_output, axis=0)
-    #     bbox_pred_test = tf.squeeze(bbox_pred,axis=0)
-    #     landmark_pred_test = tf.squeeze(landmark_pred,axis=0)
-    #     return cls_pro_test,bbox_pred_test,landmark_pred_test
-        
-# def R_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True):
-
-#     x = keras.layers.Conv2D(28, (3, 3), activation=prelu, name="conv1")(inputs)
-#     x = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")(x)
-#     x = keras.layers.Conv2D(48, (3, 3), activation=prelu, name="conv2")(x) 
-#     x = keras.layers.MaxPooling2D((3, 3), 2, padding="valid", name="pool2")(x)
-#     x = keras.layers.Conv2D(64, (2, 2), activation=prelu, name="conv3")(x)
-#     x = keras.layers.Flatten()(x)
-#     x = keras.layers.Dense(128, name="fc1")(x)
-#     cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")(x)
-#     bbox_pred = keras.layers.Dense(4, name="bbox_fc")(x)
-#     landmark_pred = keras.layers.Dense(10, name="landmark_fc")(x)
-
-#     model = keras.models.Model(inputs, [cls_prob, bbox_pred, landmark_pred])
-#     print(model.summary())
-
-    #train
-    # if training:
-    #     cls_loss = cls_ohem(cls_prob,label)
-    #     bbox_loss = bbox_ohem(bbox_pred,bbox_target,label)
-    #     accuracy = cal_accuracy(cls_prob,label)
-    #     landmark_loss = landmark_ohem(landmark_pred,landmark_target,label)
-    #     L2_loss = tf.add_n(slim.losses.get_regularization_losses())
-    #     return cls_loss,bbox_loss,landmark_loss,L2_loss,accuracy
-    # else:
-    #     return cls_prob,bbox_pred,landmark_pred
-    
-# def O_Net(inputs,label=None,bbox_target=None,landmark_target=None,training=True):
-
-#     x = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv1")(inputs)
-#     x = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")(x)
-#     x = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv2")(x) 
-#     x = keras.layers.MaxPooling2D((3, 3), 2, name="pool2")(x)
-#     x = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv3")(x) 
-#     x = keras.layers.MaxPooling2D((2, 2), 2, padding="same", name="pool3")(x)
-#     x = keras.layers.Conv2D(128, (2, 2), activation=prelu, name="conv4")(x)
-#     x = keras.layers.Flatten()(x)
-#     x = keras.layers.Dense(256, name="fc1")(x)
-#     cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")(x)
-#     bbox_pred = keras.layers.Dense(4, name="bbox_fc")(x)
-#     landmark_pred = keras.layers.Dense(10, name="landmark_fc")(x)
-
-#     model = keras.models.Model(inputs, [cls_prob, bbox_pred, landmark_pred])
-#     print(model.summary())
-    #train
-    # if training:
-    #     cls_loss = cls_ohem(cls_prob,label)
-    #     bbox_loss = bbox_ohem(bbox_pred,bbox_target,label)
-    #     accuracy = cal_accuracy(cls_prob,label)
-    #     landmark_loss = landmark_ohem(landmark_pred, landmark_target,label)
-    #     L2_loss = tf.add_n(slim.losses.get_regularization_losses())
-    #     return cls_loss,bbox_loss,landmark_loss,L2_loss,accuracy
-    # else:
-    #     return cls_prob,bbox_pred,landmark_pred
-
-
 class P_Net(keras.Model):
     def __init__(self):
         super(P_Net, self).__init__(name="P_Net")
@@ -357,3 +259,8 @@ class O_Net(keras.Model):
         x = self.flatten(x)
         x = self.fc1(x)
         return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]
+
+if __name__ == "__main__":
+    p_net = P_Net()
+    p_net.build((1, 12,12,3))
+    print(p_net.summary())

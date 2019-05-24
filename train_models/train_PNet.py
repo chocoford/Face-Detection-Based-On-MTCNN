@@ -20,37 +20,27 @@ def landmark_loss(pred, landmark_target, label):
     landmark_pred = tf.squeeze(pred, [1, 2])
     return landmark_ohem(landmark_pred, landmark_target, label)
 
-def multi_loss(pred, target):
-    print(target)
-    print(pred)
-    # label, bbox_target, landmark_target = target
-    # cls_pred, bbox_pred, landmark_pred = pred
-
-    # cls_pred = tf.squeeze(cls_pred, [1, 2])
-    # bbox_pred = tf.squeeze(bbox_pred, [1, 2])
-    # landmark_pred = tf.squeeze(landmark_pred, [1, 2])
-
-    # cls_loss = cls_ohem(cls_pred,label)
-    # bbox_loss = bbox_ohem(bbox_pred,bbox_target,label)
-    # landmark_loss = landmark_ohem(landmark_pred, landmark_target, label)
-
-    return 0.5
-
 def cls_acc(cls_pred, labels):
     cls_pred = tf.squeeze(cls_pred, [1, 2])
     return cal_accuracy(cls_pred, labels)
 
 
-def loss(model, images, labels, bboxes, landmarks):
+def total_loss(model, images, labels, bboxes, landmarks):
+    """
+    Return
+    --------------------
+        (total_loss, cls_loss, bbox_loss, landmark_loss)
+    """
     pred = model(images)
     c_loss = cls_loss(pred[0], labels)
     b_loss = bbox_loss(pred[1], bboxes, labels)
     l_loss = landmark_loss(pred[2], landmarks, labels)
-    return c_loss + 0.5 * b_loss + 0.5 * l_loss
+    return c_loss + 0.5 * b_loss + 0.5 * l_loss#, c_loss, b_loss, l_loss
 
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
-        loss_value = loss(model, images, labels, bboxes, landmarks)
+        # must execute model(x) in the context of tf.GradientTape()
+        loss_value = total_loss(model, images, labels, bboxes, landmarks)
     return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
 
@@ -68,7 +58,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
         lr: 学习率
     """
     model = P_Net()
-    batch_size = 512
+    batch_size = 256
     total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
 
     # callbacks = [tf.keras.callbacks.ModelCheckpoint("../data/ultramodern_model/PNet/pnet.h5",
@@ -97,7 +87,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
 
     #estimate time left
     now = time.time()
-    pred = now
+    pre = now
 
     print("start training")
     for epoch in range(end_epoch):
@@ -109,27 +99,36 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
             labels, bboxes, landmarks = target_batch
             images = image_color_distort(images)
             # images, landmarks = random_flip_images(images, labels, landmarks)
-            loss_value, grads = grad(model, images, labels, bboxes, landmarks)
+            total_loss, grads = grad(model, images, labels, bboxes, landmarks)
             optimizer.apply_gradients(zip(grads, model.trainable_variables), global_step=tf.train.get_or_create_global_step())
 
-            acc_value = cls_acc(model(images)[0], labels)
+            display_pred = model(images)
+            acc_value = cls_acc(display_pred[0], labels)
+            c_loss = cls_loss(display_pred[0], labels)
+            b_loss = bbox_loss(display_pred[1], bboxes, labels)
+            l_loss = landmark_loss(display_pred[2], landmarks, labels)
 
-            epoch_loss_avg(loss_value)
+            # total_loss, c_loss, b_loss, l_loss = loss_value
+            epoch_loss_avg(total_loss)
             epoch_accuracy_avg(acc_value)
 
             if i % display_step == 0:
                 now = time.time()
                 total_steps = total_num // batch_size
-                remaining_time = (now - pred) * (total_steps - i) / display_step // 60
-                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {2} mins. loss_value: {3} acc: {4}".format(i, 
-                                                                                                                                   total_steps, 
-                                                                                                                                   remaining_time,
-                                                                                                                                   loss_value.numpy(),
-                                                                                                                                   acc_value.numpy()))
+                remaining_time = (now - pre) * (total_steps - i) / display_step // 60
+                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {2} mins. \
+loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmark_loss: {7:.3f}".format(i, 
+                                                                                                        total_steps, 
+                                                                                                        remaining_time,
+                                                                                                        total_loss.numpy(),
+                                                                                                        acc_value.numpy(),
+                                                                                                        c_loss.numpy(),
+                                                                                                        b_loss.numpy(),
+                                                                                                        l_loss.numpy()))
                 sys.stdout.flush()  
-                pred = now
+                pre = now
 
-        print("\rEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
+        print("Epoch {0}: Loss: {1} Accuracy: {2}\n".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
 
         # save model
         save_path = root.save(checkpoint_prefix)

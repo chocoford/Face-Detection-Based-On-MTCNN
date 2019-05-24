@@ -10,8 +10,9 @@ num_keep_radio = 0.7
 
 #define prelu
 def prelu(inputs):
-    with tf.variable_scope("prelu", reuse=tf.AUTO_REUSE):
-        alphas = tf.get_variable("alphas", shape=inputs.get_shape()[-1], dtype=tf.float32, initializer=tf.constant_initializer(0.25))
+    # with tf.variable_scope("prelu", reuse=tf.AUTO_REUSE):
+    alphas = tf.get_variable("alphas", shape=inputs.get_shape()[-1], dtype=tf.float32, initializer=tf.constant_initializer(0.25))
+    print(alphas)
     # inputs.get_shape()[-1]
     # alphas = 0.25
     pos = tf.nn.relu(inputs)
@@ -181,10 +182,13 @@ class P_Net(keras.Model):
     def __init__(self):
         super(P_Net, self).__init__(name="P_Net")
         # Define layers here.
-        self.conv1 = keras.layers.Conv2D(10, (3, 3), activation=prelu, name="conv1")
+        self.conv1 = keras.layers.Conv2D(10, (3, 3), name="conv1")
+        self.prelu1 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu1")
         self.pool1 = keras.layers.MaxPooling2D((2, 2), name="pool1")
-        self.conv2 = keras.layers.Conv2D(16, (3, 3), activation=prelu, name="conv2")
-        self.conv3 = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv3") 
+        self.conv2 = keras.layers.Conv2D(16, (3, 3), name="conv2")
+        self.prelu2 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu2")
+        self.conv3 = keras.layers.Conv2D(32, (3, 3), name="conv3") 
+        self.prelu3 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu3")
         self.cls_output = keras.layers.Conv2D(2, (1, 1), activation="softmax", name="conv4_1")
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
         self.landmark_pred = keras.layers.Conv2D(10, (1, 1), name="conv4_3")
@@ -194,8 +198,11 @@ class P_Net(keras.Model):
         # Define your forward pass here,
         # using layers you previously defined (in `__init__`).
         x = self.conv1(inputs)
+        x = self.prelu1(x)
         x = self.pool1(x)
+        x = self.prelu2(x)
         x = self.conv2(x)
+        x = self.prelu3(x)
         x = self.conv3(x)
         return [self.cls_output(x), self.bbox_pred(x), self.landmark_pred(x)]
 
@@ -264,3 +271,4 @@ if __name__ == "__main__":
     p_net = P_Net()
     p_net.build((1, 12,12,3))
     print(p_net.summary())
+    print(p_net.trainable_variables)

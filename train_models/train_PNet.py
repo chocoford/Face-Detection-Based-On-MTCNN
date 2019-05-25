@@ -35,7 +35,7 @@ def total_loss(model, images, labels, bboxes, landmarks):
     c_loss = cls_loss(pred[0], labels)
     b_loss = bbox_loss(pred[1], bboxes, labels)
     l_loss = landmark_loss(pred[2], landmarks, labels)
-    return c_loss + 0.5 * b_loss + 0.5 * l_loss#, c_loss, b_loss, l_loss
+    return c_loss + 0.5 * b_loss + 0.5 * l_loss
 
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
@@ -128,7 +128,7 @@ loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmar
                 sys.stdout.flush()  
                 pre = now
 
-        print("Epoch {0}: Loss: {1} Accuracy: {2}\n".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
+        print("/nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
 
         # save model
         save_path = root.save(checkpoint_prefix)

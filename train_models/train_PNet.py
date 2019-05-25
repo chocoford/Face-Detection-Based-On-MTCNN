@@ -67,7 +67,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
                                                     
     #             ]
 
-    optimizer = tf.train.MomentumOptimizer(lr, 0.9)
+    optimizer = tf.train.AdamOptimizer()
 
     # 计算损失时会用到额外数据，所以只能自己写training loop
     # losses = {

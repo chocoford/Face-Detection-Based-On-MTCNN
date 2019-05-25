@@ -5,6 +5,8 @@ sys.path.append("../")
 from train_models.MTCNN_config import config
 from train_models.mtcnn_model import P_Net
 
+from train_models.utils import load_and_get_normalization_img
+
 class FCNDetector(object):
     """
         Dectector for Fully Convolution Network.  
@@ -12,14 +14,11 @@ class FCNDetector(object):
     """
     def __init__(self, net_factory, model_path):
         self.model = net_factory()
-        checkpoint_prefix = os.path.join(model_path, "ckpt")
         root = tf.train.Checkpoint(model=self.model)
-        root.restore(tf.train.latest_checkpoint(checkpoint_prefix))
-
+        root.restore(tf.train.latest_checkpoint(model_path)).assert_existing_objects_matched()
+        # print("raw prediction: ", self.model(tf.expand_dims(load_and_get_normalization_img("test/not test/5.jpg"), axis=0))[0])
 
     def predict(self, databatch):
-        # height, width, _ = databatch.shape
-        # print(height, width)
         databatch = np.expand_dims(databatch, axis=0)
         pred = self.model.predict(databatch)
         cls_prob, bbox_pred, _ = pred

@@ -45,7 +45,7 @@ def cls_ohem(cls_prob, label):
     indices_ = row + label_int # 就是如果label是pos就看1X1X2中的第2个，neg或part就看第1个
     # indices_ = row + 1
     label_prob = tf.squeeze(tf.gather(cls_prob_reshape, indices_)) #从cls_prob_reshape中获取索引为indices_的值，squeeze后变成一维的[384即batch_size]
-    loss = tf.keras.backend.binary_crossentropy(label, label_prob)  # -tf.log(label_prob+1e-10)
+    loss = -tf.log(label_prob+1e-10)# tf.keras.backend.binary_crossentropy(label, label_prob)  #
     zeros = tf.zeros_like(label_prob, dtype=tf.float32)
     ones = tf.ones_like(label_prob,dtype=tf.float32)
     # set pos and neg to be 1, rest to be 0
@@ -150,7 +150,8 @@ def cal_accuracy(cls_prob,label):
     '''
     # get the index of maximum value along axis one from cls_prob
     # 0 for negative 1 for positive
-    pred = cls_prob[:, 1]# tf.argmax(cls_prob,axis=1)
+    #pred = cls_prob[:, 1]# 
+    tf.argmax(cls_prob,axis=1)
     label_int = tf.cast(label,tf.float32)
     # return the index of pos and neg examples
     cond = tf.where(tf.greater_equal(label_int,0))
@@ -194,7 +195,7 @@ class P_Net(keras.Model):
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
         self.landmark_pred = keras.layers.Conv2D(10, (1, 1), name="conv4_3")
 
-        self.get_summary((12, 12, 3))
+        # self.get_summary((12, 12, 3))
 
     def call(self, inputs):
         # Define your forward pass here,
@@ -277,5 +278,5 @@ class O_Net(keras.Model):
 if __name__ == "__main__":
     p_net = P_Net()
     # p_net.build((12, 12, 3))
-    p_net.get_summary((274, 437, 3))
+    p_net.get_summary((24, 24, 3))
     # print(p_net.trainable_variables)

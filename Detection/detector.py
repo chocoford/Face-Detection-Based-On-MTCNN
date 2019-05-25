@@ -9,11 +9,8 @@ class Detector(object):
     def __init__(self, net_factory, data_size, batch_size, model_path):
 
         self.model = net_factory()
-        optimizer = tf.train.MomentumOptimizer(0.001, 0.9)
-        checkpoint_dir = model_path
-        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
         root = tf.train.Checkpoint(optimizer=optimizer, model=self.model)
-        root.restore(tf.train.latest_checkpoint(checkpoint_prefix))
+        root.restore(tf.train.latest_checkpoint(model_path)).assert_existing_objects_matched()
 
         self.data_size = data_size
         self.batch_size = batch_size

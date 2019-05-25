@@ -42,9 +42,10 @@ def cls_ohem(cls_prob, label):
     num_row = tf.to_int32(cls_prob.get_shape()[0]) #384
     #row = [0,2,4.....]
     row = tf.range(num_row)*2
-    indices_ = row + label_int # 就是如果是pos就看1X1X2中的第一个，neg或part就看第二个
+    indices_ = row + label_int # 就是如果label是pos就看1X1X2中的第2个，neg或part就看第1个
+    # indices_ = row + 1
     label_prob = tf.squeeze(tf.gather(cls_prob_reshape, indices_)) #从cls_prob_reshape中获取索引为indices_的值，squeeze后变成一维的[384即batch_size]
-    loss = -tf.log(label_prob+1e-10)
+    loss = tf.keras.backend.binary_crossentropy(label, label_prob)  # -tf.log(label_prob+1e-10)
     zeros = tf.zeros_like(label_prob, dtype=tf.float32)
     ones = tf.ones_like(label_prob,dtype=tf.float32)
     # set pos and neg to be 1, rest to be 0
@@ -269,6 +270,6 @@ class O_Net(keras.Model):
 
 if __name__ == "__main__":
     p_net = P_Net()
-    p_net.build((1, 12,12,3))
+    p_net.build((1,12,12,3))
     print(p_net.summary())
-    print(p_net.trainable_variables)
+    # print(p_net.trainable_variables)

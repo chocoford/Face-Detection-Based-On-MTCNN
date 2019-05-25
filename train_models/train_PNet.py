@@ -61,14 +61,11 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     batch_size = 256
     total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
 
+    optimizer = tf.train.AdamOptimizer()
     # callbacks = [tf.keras.callbacks.ModelCheckpoint("../data/ultramodern_model/PNet/pnet.h5",
     #                                                 monitor="multi_loss", 
-    #                                                 save_best_only=True),
-                                                    
+    #                                                 save_best_only=True),                                          
     #             ]
-
-    optimizer = tf.train.AdamOptimizer()
-
     # 计算损失时会用到额外数据，所以只能自己写training loop
     # losses = {
     #     "cls_output": "categorical_crossentropy",
@@ -128,7 +125,7 @@ loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmar
                 sys.stdout.flush()  
                 pre = now
 
-        print("/nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
+        print("\nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
 
         # save model
         save_path = root.save(checkpoint_prefix)

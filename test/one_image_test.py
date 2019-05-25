@@ -49,10 +49,10 @@ for imagepath in test_img_path:
     print(imagepath)
     image = cv2.imread(imagepath)
     for bbox in all_boxes[count]:
-        # if bbox[4] < 0.92:
-        #     continue
+        if bbox[4] < 0.7:
+            continue
         cv2.putText(image, str(np.round(bbox[4],2)), (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_TRIPLEX, 1, color=(255,0,255))
-        cv2.rectangle(image, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])),(0,0,255), 5)
+        cv2.rectangle(image, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])),(0,0,255), 1)
         if bbox[0] < 0:
             print("there is a bbox[0] < 0", bbox[0])
     # for landmark in landmarks[count]:

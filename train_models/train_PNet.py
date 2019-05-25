@@ -126,7 +126,8 @@ loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmar
                 pre = now
 
         print("\nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
-        print("VALIDATION: try to predict a pos pic for cls_prob: ", model(load_and_get_normalization_img("test/not test/5.jpg")))
+        print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/5.jpg"), axis=0))[0])
+        print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/100011.jpg"), axis=0))[0])
 
         # save model
         save_path = root.save(checkpoint_prefix)

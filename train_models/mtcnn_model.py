@@ -150,8 +150,8 @@ def cal_accuracy(cls_prob,label):
     '''
     # get the index of maximum value along axis one from cls_prob
     # 0 for negative 1 for positive
-    pred = tf.argmax(cls_prob,axis=1)
-    label_int = tf.cast(label,tf.int64)
+    pred = cls_prob[:, 1]# tf.argmax(cls_prob,axis=1)
+    label_int = tf.cast(label,tf.float32)
     # return the index of pos and neg examples
     cond = tf.where(tf.greater_equal(label_int,0))
     picked = tf.squeeze(cond)
@@ -184,16 +184,17 @@ class P_Net(keras.Model):
         super(P_Net, self).__init__(name="P_Net")
         # Define layers here.
         self.conv1 = keras.layers.Conv2D(10, (3, 3), name="conv1")
-        self.prelu1 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu1")
+        self.prelu1 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu1")
         self.pool1 = keras.layers.MaxPooling2D((2, 2), name="pool1")
         self.conv2 = keras.layers.Conv2D(16, (3, 3), name="conv2")
-        self.prelu2 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu2")
+        self.prelu2 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu2")
         self.conv3 = keras.layers.Conv2D(32, (3, 3), name="conv3")
-        self.prelu3 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu3")
+        self.prelu3 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu3")
         self.cls_output = keras.layers.Conv2D(2, (1, 1), activation="softmax", name="conv4_1")
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
         self.landmark_pred = keras.layers.Conv2D(10, (1, 1), name="conv4_3")
 
+        self.get_summary((12, 12, 3))
 
     def call(self, inputs):
         # Define your forward pass here,

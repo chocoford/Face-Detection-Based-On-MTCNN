@@ -9,7 +9,7 @@ import time, sys, os
 def load_and_get_normalization_img(path):
     image = tf.io.read_file(path)
     image = tf.image.decode_jpeg(image, channels=3)
-    image = tf.image.resize(image, [image.shape[1], image.shape[0]])
+    image = tf.cast(image, tf.float32)
     image /= 255.0  # normalize to [0,1] range
     return image
 

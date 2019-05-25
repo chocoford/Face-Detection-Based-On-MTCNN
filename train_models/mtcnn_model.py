@@ -188,7 +188,7 @@ class P_Net(keras.Model):
         self.pool1 = keras.layers.MaxPooling2D((2, 2), name="pool1")
         self.conv2 = keras.layers.Conv2D(16, (3, 3), name="conv2")
         self.prelu2 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu2")
-        self.conv3 = keras.layers.Conv2D(32, (3, 3), name="conv3") 
+        self.conv3 = keras.layers.Conv2D(32, (3, 3), name="conv3")
         self.prelu3 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu3")
         self.cls_output = keras.layers.Conv2D(2, (1, 1), activation="softmax", name="conv4_1")
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
@@ -206,6 +206,11 @@ class P_Net(keras.Model):
         x = self.prelu3(x)
         x = self.conv3(x)
         return [self.cls_output(x), self.bbox_pred(x), self.landmark_pred(x)]
+
+    def get_summary(self, input_shape):
+        inputs = keras.Input(input_shape)
+        model = keras.Model(inputs, self.call(inputs))
+        print(model.summary())
 
 
 class R_Net(keras.Model):
@@ -270,6 +275,6 @@ class O_Net(keras.Model):
 
 if __name__ == "__main__":
     p_net = P_Net()
-    p_net.build((1,12,12,3))
-    print(p_net.summary())
+    # p_net.build((12, 12, 3))
+    p_net.get_summary((274, 437, 3))
     # print(p_net.trainable_variables)

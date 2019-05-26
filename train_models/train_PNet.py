@@ -66,15 +66,17 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     #                                                 monitor="multi_loss", 
     #                                                 save_best_only=True),                                          
     #             ]
-    # 计算损失时会用到额外数据，所以只能自己写training loop
+    # # 计算损失时会用到额外数据，所以只能自己写training loop
     # losses = {
     #     "cls_output": "categorical_crossentropy",
     #     "bbox_output": "categorical_crossentropy",
     # }
-    # lossWeights = {"category_output": 1.0, "color_output": 1.0}
+    # lossWeights = {"cls_output": 1.0, "bbox_output": 1.0}
 
     # model.compile(optimizer, loss=multi_loss, metrics=[cls_acc])
     # model.fit(train_dataset, epochs=30, steps_per_epoch=total_num//batch_size, callbacks=callbacks)
+
+
     os.makedirs(prefix, exist_ok=True)
     checkpoint_prefix = os.path.join(prefix, "ckpt")
     root = tf.train.Checkpoint(optimizer=optimizer, model=model, optimizer_step=tf.train.get_or_create_global_step()) 

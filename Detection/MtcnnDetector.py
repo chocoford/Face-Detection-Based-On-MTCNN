@@ -140,7 +140,6 @@ class MtcnnDetector(object):
         new_width = int(width * scale)  # resized new width
         new_dim = (new_width, new_height)
         img_resized = cv2.resize(img, new_dim, interpolation=cv2.INTER_LINEAR)  # resized image
-        # don't understand this operation
         img_resized = (img_resized - 127.5) / 128
         return img_resized
 

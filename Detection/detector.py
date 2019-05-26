@@ -9,7 +9,7 @@ class Detector(object):
     def __init__(self, net_factory, data_size, batch_size, model_path):
 
         self.model = net_factory()
-        root = tf.train.Checkpoint(optimizer=optimizer, model=self.model)
+        root = tf.train.Checkpoint(model=self.model)
         root.restore(tf.train.latest_checkpoint(model_path)).assert_existing_objects_matched()
 
         self.data_size = data_size

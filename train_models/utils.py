@@ -10,7 +10,7 @@ def load_and_get_normalization_img(path):
     image = tf.io.read_file(path)
     image = tf.image.decode_jpeg(image, channels=3)
     image = tf.cast(image, tf.float32)
-    image /= 255.0  # normalize to [0,1] range
+    image = (image - 127.5) / 128.0  # normalize to [0,1] range
     return image
 
 
@@ -116,7 +116,7 @@ after keeping ratios. {} samples in total".format(all_image_labels.count(1),
     def preprocess_image(image):
         image = tf.image.decode_jpeg(image, channels=3)
         image = tf.image.resize(image, [size, size])
-        image = (image - 127.5) / 255.0  # normalize to [0,1] range
+        image = (image - 127.5) / 128.0  # normalize to [-1,1] range
         return image
 
     def load_and_preprocess_image(path):

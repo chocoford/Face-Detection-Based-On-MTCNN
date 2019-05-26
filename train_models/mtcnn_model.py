@@ -1,31 +1,10 @@
 #coding:utf-8
 import tensorflow as tf
 from tensorflow.contrib import slim
-from tensorflow.contrib.tensorboard.plugins import projector
 from tensorflow import keras
 import numpy as np
 num_keep_radio = 0.7
 
-# tf.enable_eager_execution()
-
-#define prelu
-def prelu(inputs):
-    # with tf.variable_scope("prelu", reuse=tf.AUTO_REUSE):
-    alphas = tf.get_variable("alphas", shape=inputs.get_shape()[-1], dtype=tf.float32, initializer=tf.constant_initializer(0.25))
-    print(alphas)
-    # inputs.get_shape()[-1]
-    # alphas = 0.25
-    pos = tf.nn.relu(inputs)
-    neg = alphas * (inputs-abs(inputs))*0.5
-    return pos + neg
-
-def dense_to_one_hot(labels_dense,num_classes):
-    num_labels = labels_dense.shape[0]
-    index_offset = np.arange(num_labels)*num_classes
-    #num_sample*num_classes
-    labels_one_hot = np.zeros((num_labels,num_classes))
-    labels_one_hot.flat[index_offset + labels_dense.ravel()] = 1
-    return labels_one_hot
 #cls_prob:batch*2
 #label:batch
 
@@ -45,7 +24,7 @@ def cls_ohem(cls_prob, label):
     indices_ = row + label_int # 就是如果label是pos就看1X1X2中的第2个，neg或part就看第1个
     # indices_ = row + 1
     label_prob = tf.squeeze(tf.gather(cls_prob_reshape, indices_)) #从cls_prob_reshape中获取索引为indices_的值，squeeze后变成一维的[384即batch_size]
-    loss = -tf.log(label_prob+1e-10)# tf.keras.backend.binary_crossentropy(label, label_prob)  #
+    loss = -tf.log(label_prob+1e-10) #参考https://blog.csdn.net/weixin_34204722/article/details/87327239
     zeros = tf.zeros_like(label_prob, dtype=tf.float32)
     ones = tf.ones_like(label_prob,dtype=tf.float32)
     # set pos and neg to be 1, rest to be 0
@@ -59,34 +38,6 @@ def cls_ohem(cls_prob, label):
     loss,_ = tf.nn.top_k(loss, k=keep_num)
     return tf.reduce_mean(loss)
 
-
-def bbox_ohem_smooth_L1_loss(bbox_pred,bbox_target,label):
-    sigma = tf.constant(1.0)
-    threshold = 1.0/(sigma**2)
-    zeros_index = tf.zeros_like(label, dtype=tf.float32)
-    valid_inds = tf.where(label!=zeros_index,tf.ones_like(label,dtype=tf.float32),zeros_index)
-    abs_error = tf.abs(bbox_pred-bbox_target)
-    loss_smaller = 0.5*((abs_error*sigma)**2)
-    loss_larger = abs_error-0.5/(sigma**2)
-    smooth_loss = tf.reduce_sum(tf.where(abs_error<threshold,loss_smaller,loss_larger),axis=1)
-    keep_num = tf.cast(tf.reduce_sum(valid_inds)*num_keep_radio,dtype=tf.int32)
-    smooth_loss = smooth_loss*valid_inds
-    _, k_index = tf.nn.top_k(smooth_loss, k=keep_num)
-    smooth_loss_picked = tf.gather(smooth_loss, k_index)
-    return tf.reduce_mean(smooth_loss_picked)
-def bbox_ohem_orginal(bbox_pred,bbox_target,label):
-    zeros_index = tf.zeros_like(label, dtype=tf.float32)
-    #pay attention :there is a bug!!!!
-    valid_inds = tf.where(label!=zeros_index,tf.ones_like(label,dtype=tf.float32),zeros_index)
-    #(batch,)
-    square_error = tf.reduce_sum(tf.square(bbox_pred-bbox_target),axis=1)
-    #keep_num scalar
-    keep_num = tf.cast(tf.reduce_sum(valid_inds)*num_keep_radio,dtype=tf.int32)
-    #keep valid index square_error
-    square_error = square_error*valid_inds
-    _, k_index = tf.nn.top_k(square_error, k=keep_num)
-    square_error = tf.gather(square_error, k_index)
-    return tf.reduce_mean(square_error)
 
 #label=1 or label=-1 then do regression
 def bbox_ohem(bbox_pred,bbox_target,label):
@@ -151,8 +102,8 @@ def cal_accuracy(cls_prob,label):
     # get the index of maximum value along axis one from cls_prob
     # 0 for negative 1 for positive
     #pred = cls_prob[:, 1]# 
-    tf.argmax(cls_prob,axis=1)
-    label_int = tf.cast(label,tf.float32)
+    pred = tf.argmax(cls_prob,axis=1)
+    label_int = tf.cast(label,tf.int64)
     # return the index of pos and neg examples
     cond = tf.where(tf.greater_equal(label_int,0))
     picked = tf.squeeze(cond)
@@ -195,8 +146,6 @@ class P_Net(keras.Model):
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
         self.landmark_pred = keras.layers.Conv2D(10, (1, 1), name="conv4_3")
 
-        # self.get_summary((12, 12, 3))
-
     def call(self, inputs):
         # Define your forward pass here,
         # using layers you previously defined (in `__init__`).
@@ -219,13 +168,17 @@ class R_Net(keras.Model):
     def __init__(self):
         super(R_Net, self).__init__(name="R_Net")
         # Define layers here.
-        self.conv1 = keras.layers.Conv2D(28, (3, 3), activation=prelu, name="conv1")
+        self.conv1 = keras.layers.Conv2D(28, (3, 3), name="conv1")
+        self.prelu1 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu1")
         self.pool1 = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")
-        self.conv2 = keras.layers.Conv2D(48, (3, 3), activation=prelu, name="conv2")
+        self.conv2 = keras.layers.Conv2D(48, (3, 3), name="conv2")
+        self.prelu2 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu2")
         self.pool2 = keras.layers.MaxPooling2D((3, 3), 2, padding="valid", name="pool2")
-        self.conv3 = keras.layers.Conv2D(64, (2, 2), activation=prelu, name="conv3")
+        self.conv3 = keras.layers.Conv2D(64, (2, 2), name="conv3")
+        self.prelu3 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu3")
         self.flatten = keras.layers.Flatten()
         self.fc1 = keras.layers.Dense(128, name="fc1")
+        self.prelu4 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu4")
         self.cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")
         self.bbox_pred = keras.layers.Dense(4, name="bbox_fc")
         self.landmark_pred = keras.layers.Dense(10, name="landmark_fc")
@@ -234,13 +187,22 @@ class R_Net(keras.Model):
         # Define your forward pass here,
         # using layers you previously defined (in `__init__`).
         x = self.conv1(inputs)
+        x = self.prelu1(x)
         x = self.pool1(x)
         x = self.conv2(x)
+        x = self.prelu2(x)
         x = self.pool2(x)
         x = self.conv3(x)
+        x = self.prelu3(x)
         x = self.flatten(x)
         x = self.fc1(x)
+        x = self.prelu4(x)
         return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]
+
+    def get_summary(self, input_shape):
+        inputs = keras.Input(input_shape)
+        model = keras.Model(inputs, self.call(inputs))
+        print(model.summary())
 
 
 class O_Net(keras.Model):
@@ -276,7 +238,11 @@ class O_Net(keras.Model):
         return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]
 
 if __name__ == "__main__":
+    tf.enable_eager_execution()
     p_net = P_Net()
+    r_net = R_Net()
+    r_net.get_summary((24, 24, 3))
     # p_net.build((12, 12, 3))
-    p_net.get_summary((24, 24, 3))
+    # p_net.get_summary((24, 24, 3))
     # print(p_net.trainable_variables)
+

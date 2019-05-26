@@ -62,8 +62,7 @@ def load_wider_face_gt_boxes(fpath):
     Args:
         fpath: the path of the txt file.
     Return:
-        num: the gt boxes num.
-        gt_boxes: [x_min, y_min, x_max, y_max]s of all images.
+        gt_data:{path: gt_boxes}
     """
     f = open(fpath)
     data = f.read()

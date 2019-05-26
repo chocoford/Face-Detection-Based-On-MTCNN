@@ -24,7 +24,7 @@ def cls_ohem(cls_prob, label):
     indices_ = row + label_int # 就是如果label是pos就看1X1X2中的第2个，neg或part就看第1个
     # indices_ = row + 1
     label_prob = tf.squeeze(tf.gather(cls_prob_reshape, indices_)) #从cls_prob_reshape中获取索引为indices_的值，squeeze后变成一维的[384即batch_size]
-    loss = -tf.log(label_prob+1e-10) #参考https://blog.csdn.net/weixin_34204722/article/details/87327239
+    loss = -tf.log(label_prob+1e-10) # 参考https://blog.csdn.net/weixin_34204722/article/details/87327239
     zeros = tf.zeros_like(label_prob, dtype=tf.float32)
     ones = tf.ones_like(label_prob,dtype=tf.float32)
     # set pos and neg to be 1, rest to be 0

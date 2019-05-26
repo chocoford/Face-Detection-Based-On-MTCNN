@@ -209,15 +209,20 @@ class O_Net(keras.Model):
     def __init__(self):
         super(O_Net, self).__init__(name="O_Net")
         # Define layers here.
-        self.conv1 = keras.layers.Conv2D(32, (3, 3), activation=prelu, name="conv1")
+        self.conv1 = keras.layers.Conv2D(32, (3, 3), name="conv1")
+        self.prelu1 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu1")
         self.pool1 = keras.layers.MaxPooling2D((3, 3), 2, padding="same", name="pool1")
-        self.conv2 = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv2")
+        self.conv2 = keras.layers.Conv2D(64, (3, 3), name="conv2")
+        self.prelu2 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu2")
         self.pool2 = keras.layers.MaxPooling2D((3, 3), 2, name="pool2")
-        self.conv3 = keras.layers.Conv2D(64, (3, 3), activation=prelu, name="conv3")
+        self.conv3 = keras.layers.Conv2D(64, (3, 3), name="conv3")
+        self.prelu3 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu3") 
         self.pool3 = keras.layers.MaxPooling2D((2, 2), 2, padding="same", name="pool3")
-        self.conv4 = keras.layers.Conv2D(128, (2, 2), activation=prelu, name="conv4")
+        self.conv4 = keras.layers.Conv2D(128, (2, 2), name="conv4")
+        self.prelu4 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu4") 
         self.flatten = keras.layers.Flatten()
         self.fc1 = keras.layers.Dense(256, name="fc1")
+        self.prelu5 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu5") 
         self.cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")
         self.bbox_pred = keras.layers.Dense(4, name="bbox_fc")
         self.landmark_pred = keras.layers.Dense(10, name="landmark_fc")
@@ -227,21 +232,32 @@ class O_Net(keras.Model):
         # Define your forward pass here,
         # using layers you previously defined (in `__init__`).
         x = self.conv1(inputs)
+        x = self.prelu1(x)
         x = self.pool1(x)
         x = self.conv2(x)
+        x = self.prelu2(x)
         x = self.pool2(x)
         x = self.conv3(x)
+        x = self.prelu3(x)
         x = self.pool3(x)
         x = self.conv4(x)
+        x = self.prelu4(x)
         x = self.flatten(x)
         x = self.fc1(x)
+        x = self.prelu5(x)
         return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]
+
+    def get_summary(self, input_shape):
+        inputs = keras.Input(input_shape)
+        model = keras.Model(inputs, self.call(inputs))
+        print(model.summary())
 
 if __name__ == "__main__":
     tf.enable_eager_execution()
     p_net = P_Net()
     r_net = R_Net()
-    r_net.get_summary((24, 24, 3))
+    o_net = O_Net()
+    o_net.get_summary((48, 48, 3))
     # p_net.build((12, 12, 3))
     # p_net.get_summary((24, 24, 3))
     # print(p_net.trainable_variables)

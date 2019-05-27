@@ -184,7 +184,7 @@ def image_color_distort(inputs):
 
 if __name__ == "__main__":
     tf.enable_eager_execution()
-    assert(tf.executing_eagerly)
+    assert(tf.executing_eagerly())
 
     num, dataset = get_dataset("../data/imglists/PNet")
     for image, target in dataset.take(1):

@@ -153,10 +153,10 @@ class P_Net(keras.Model):
         x = self.conv1(inputs)
         x = self.prelu1(x)
         x = self.pool1(x)
-        x = self.prelu2(x)
         x = self.conv2(x)
-        x = self.prelu3(x)
+        x = self.prelu2(x)
         x = self.conv3(x)
+        x = self.prelu3(x)
         return [self.cls_output(x), self.bbox_pred(x), self.landmark_pred(x)]
 
     def get_summary(self, input_shape):

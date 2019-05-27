@@ -234,7 +234,6 @@ class MtcnnDetector(object):
             print(np.max(np.max(maxseses, axis=1)), np.argmax(np.max(maxseses, axis=1)), np.argmax(np.max(maxseses, axis=0)), np.max(cls_cls_map[:, :, 1], axis=1), current_height)
             # boxes: num*9(x1,y1,x2,y2,score,x1_offset,y1_offset,x2_offset,y2_offset)
             boxes = self.generate_bbox(cls_cls_map[:, :, 1], reg, current_scale, self.thresh[0])
-            # break
             # scale_factor is 0.79 in default
             current_scale *= self.scale_factor
             im_resized = self.processed_image(im, current_scale)

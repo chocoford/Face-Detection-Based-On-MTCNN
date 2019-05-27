@@ -3,7 +3,7 @@ import tensorflow as tf
 import cv2
 import numpy as np
 import time, sys, os
-
+import matplotlib.pyplot as plt
 
 
 def load_and_get_normalization_img(path, size=12):
@@ -183,4 +183,11 @@ def image_color_distort(inputs):
 
 
 if __name__ == "__main__":
-    get_dataset("../data/imglists/PNet")
+    tf.enable_eager_execution()
+    assert(tf.executing_eagerly)
+
+    num, dataset = get_dataset("../data/imglists/PNet")
+    for image, target in dataset.take(1):
+        plt.figure()
+        plt.imshow(image)
+        plt.show()

@@ -216,7 +216,7 @@ class MtcnnDetector(object):
         """
         net_size = 12
 
-        current_scale = 1 #float(net_size) / self.min_face_size 
+        current_scale = 0.5 #float(net_size) / self.min_face_size 
         # print("current_scale", net_size, self.min_face_size, current_scale)
         # risize image using current_scale
         im_resized = self.processed_image(im, current_scale)

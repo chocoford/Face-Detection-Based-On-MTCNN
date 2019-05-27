@@ -16,11 +16,15 @@ class FCNDetector(object):
         self.model = net_factory()
         root = tf.train.Checkpoint(model=self.model)
         root.restore(tf.train.latest_checkpoint(model_path)).assert_existing_objects_matched()
-        # print("raw prediction: ", self.model(tf.expand_dims(load_and_get_normalization_img("test/not test/5.jpg"), axis=0))[0])
+        # cls_pred = self.model(tf.expand_dims(load_and_get_normalization_img("test/not test/2333.jpg"), axis=0))[0]
+        # cls_numpy = cls_pred.numpy()
+        # print("raw prediction: ", cls_numpy)
+        # print("233")
 
     def predict(self, databatch):
         databatch = np.expand_dims(databatch, axis=0)
-        pred = self.model.predict(databatch)
+        databatch = tf.cast(databatch, tf.float32)
+        pred = self.model(databatch)
         cls_prob, bbox_pred, _ = pred
         assert(cls_prob.shape[3]==2 and bbox_pred.shape[3]==4)
         cls_prob = np.squeeze(cls_prob, axis=0)

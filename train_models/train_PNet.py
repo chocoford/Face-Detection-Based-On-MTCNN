@@ -35,7 +35,9 @@ def total_loss(model, images, labels, bboxes, landmarks):
     c_loss = cls_loss(pred[0], labels)
     b_loss = bbox_loss(pred[1], bboxes, labels)
     l_loss = landmark_loss(pred[2], landmarks, labels)
-    return c_loss + 0.5 * b_loss + 0.5 * l_loss
+    # losses = tf.keras.losses.get_regularization_losses()
+    # l2_loss = tf.add_n(losses)
+    return c_loss + 0.5 * b_loss + 0.5 * l_loss #+ l2_loss
 
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
@@ -58,7 +60,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
         lr: 学习率
     """
     model = P_Net()
-    batch_size = 256
+    batch_size = 512
     total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
 
     optimizer = tf.train.AdamOptimizer()
@@ -105,7 +107,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
             c_loss = cls_loss(display_pred[0], labels)
             b_loss = bbox_loss(display_pred[1], bboxes, labels)
             l_loss = landmark_loss(display_pred[2], landmarks, labels)
-
+            # l2_loss = tf.add_n(tf.losses.get_regularization_losses)
             # total_loss, c_loss, b_loss, l_loss = loss_value
             epoch_loss_avg(total_loss)
             epoch_accuracy_avg(acc_value)
@@ -127,8 +129,8 @@ loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmar
                 pre = now
 
         print("\nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
-        print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/5.jpg"), axis=0))[0])
-        print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/100011.jpg"), axis=0))[0])
+        print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/7.jpg"), axis=0))[0])
+        print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/778.jpg"), axis=0))[0])
 
         # save model
         save_path = root.save(checkpoint_prefix)

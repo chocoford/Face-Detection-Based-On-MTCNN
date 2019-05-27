@@ -2,6 +2,7 @@
 import tensorflow as tf
 from tensorflow.contrib import slim
 from tensorflow import keras
+from keras.utils import plot_model
 import numpy as np
 num_keep_radio = 0.7
 
@@ -135,12 +136,12 @@ class P_Net(keras.Model):
     def __init__(self):
         super(P_Net, self).__init__(name="P_Net")
         # Define layers here.
-        self.conv1 = keras.layers.Conv2D(10, (3, 3), name="conv1")
+        self.conv1 = keras.layers.Conv2D(10, (3, 3), name="conv1", kernel_regularizer=keras.regularizers.l2(0.0005))
         self.prelu1 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu1")
         self.pool1 = keras.layers.MaxPooling2D((2, 2), name="pool1")
-        self.conv2 = keras.layers.Conv2D(16, (3, 3), name="conv2")
+        self.conv2 = keras.layers.Conv2D(16, (3, 3), name="conv2", kernel_regularizer=keras.regularizers.l2(0.0005))
         self.prelu2 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu2")
-        self.conv3 = keras.layers.Conv2D(32, (3, 3), name="conv3")
+        self.conv3 = keras.layers.Conv2D(32, (3, 3), name="conv3", kernel_regularizer=keras.regularizers.l2(0.0005))
         self.prelu3 = keras.layers.PReLU(tf.constant_initializer(0.25), shared_axes=[1, 2], name="prelu3")
         self.cls_output = keras.layers.Conv2D(2, (1, 1), activation="softmax", name="conv4_1")
         self.bbox_pred = keras.layers.Conv2D(4, (1, 1), name="conv4_2")
@@ -258,6 +259,9 @@ if __name__ == "__main__":
     r_net = R_Net()
     o_net = O_Net()
     o_net.get_summary((48, 48, 3))
+
+    plot_model(p_net, to_file="C:/Users/dove/Desktop/pnet.png")
+
     # p_net.build((12, 12, 3))
     # p_net.get_summary((24, 24, 3))
     # print(p_net.trainable_variables)

@@ -216,7 +216,7 @@ class MtcnnDetector(object):
         """
         net_size = 12
 
-        current_scale = float(net_size) / self.min_face_size 
+        current_scale = 1 #float(net_size) / self.min_face_size 
         # print("current_scale", net_size, self.min_face_size, current_scale)
         # risize image using current_scale
         im_resized = self.processed_image(im, current_scale)
@@ -232,6 +232,7 @@ class MtcnnDetector(object):
             cls_cls_map, reg = self.pnet_detector.predict(im_resized) #用训练好的模型预测
             # boxes: num*9(x1,y1,x2,y2,score,x1_offset,y1_offset,x2_offset,y2_offset)
             boxes = self.generate_bbox(cls_cls_map[:, :, 1], reg, current_scale, self.thresh[0])
+            break
             # scale_factor is 0.79 in default
             current_scale *= self.scale_factor
             im_resized = self.processed_image(im, current_scale)

@@ -6,10 +6,10 @@ import time, sys, os
 
 
 
-def load_and_get_normalization_img(path):
+def load_and_get_normalization_img(path, size=12):
     image = tf.io.read_file(path)
     image = tf.image.decode_jpeg(image, channels=3)
-    image = tf.cast(image, tf.float32)
+    image = tf.image.resize(image, [size, size])
     image = (image - 127.5) / 128.0  # normalize to [0,1] range
     return image
 
@@ -145,57 +145,6 @@ after keeping ratios. {} samples in total".format(all_image_labels.count(1),
     return len(all_image_paths), ds
 
 
-def train(model_class, base_dir, checkpoint_dir, grad, batch_size=256, end_epoch=100, display_step=100, lr=0.001):
-
-    model = model_class()
-    total_num, train_dataset = get_dataset(base_dir, batch_size=batch_size)
-    optimizer = tf.train.MomentumOptimizer(lr, 0.9)
-
-
-    # prepare for save
-    os.makedirs(checkpoint_dir, exist_ok=True)
-    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    root = tf.train.Checkpoint(optimizer=optimizer, model=model)
-
-    now = time.time()
-    pred = now
-
-    print("start training")
-    for epoch in range(end_epoch):
-        epoch_loss_avg = tf.keras.metrics.Mean()
-        epoch_accuracy_avg = tf.keras.metrics.Mean()
-
-        for i, train_batch in enumerate(train_dataset):
-            images, target_batch = train_batch
-            labels, bboxes, landmarks = target_batch
-            loss_value, grads = grad(model, images, labels, bboxes, landmarks)
-            optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-            acc_value = cls_acc(model(images)[0], labels)
-
-            epoch_loss_avg(loss_value)
-            epoch_accuracy_avg(acc_value)
-
-            if i % display_step == 0:
-                now = time.time()
-                total_steps = total_num // batch_size
-                remaining_time = (now - pred) * (total_steps - i) / display_step // 60
-                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {2} mins. loss_value: {3} acc: {4}".format(i, 
-                                                                                                                                   total_steps, 
-                                                                                                                                   remaining_time,
-                                                                                                                                   loss_value.numpy(),
-                                                                                                                                   acc_value.numpy()))
-                sys.stdout.flush()  
-                pred = now
-
-        print("\rEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
-
-        # save model
-        save_path = root.save(checkpoint_prefix)
-        print("save prefix is {}".format(save_path))
-
-
-
 def random_flip_images(image_batch,label_batch,landmark_batch):
     """
         for each batch, do flip or not flip operation randomly for data augment.
@@ -234,4 +183,4 @@ def image_color_distort(inputs):
 
 
 if __name__ == "__main__":
-    get_dataset("../data/imglists/RNet")
+    get_dataset("../data/imglists/PNet")

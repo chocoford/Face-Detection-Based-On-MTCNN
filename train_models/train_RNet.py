@@ -49,9 +49,9 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
     # net_factory = R_Net
     # train(net_factory, prefix, end_epoch, base_dir, display=display, base_lr=lr)
     model = R_Net()
-    batch_size = 256
+    batch_size = 512
     total_num, train_dataset = get_dataset(base_dir, batch_size=batch_size)
-    optimizer = tf.train.MomentumOptimizer(lr, 0.9)
+    optimizer = tf.train.AdamOptimizer()
 
 
     # prepare for save
@@ -59,6 +59,7 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
     os.makedirs(checkpoint_dir, exist_ok=True)
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     root = tf.train.Checkpoint(optimizer=optimizer, model=model)
+    root.restore(tf.train.latest_checkpoint(model_path)).assert_existing_objects_matched()
 
     display_step = 100
     now = time.time()
@@ -102,6 +103,8 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
 
 
 if __name__ == '__main__':
+    assert(tf.executing_eagerly())
+
     base_dir = '../data/imglists/RNet'
 
     model_name = 'ultramodern'

@@ -82,7 +82,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     os.makedirs(prefix, exist_ok=True)
     checkpoint_prefix = os.path.join(prefix, "ckpt")
     root = tf.train.Checkpoint(optimizer=optimizer, model=model, optimizer_step=tf.train.get_or_create_global_step()) 
-
+    root.restore(tf.train.latest_checkpoint(prefix)).assert_existing_objects_matched()
     display_step = 100
 
     #estimate time left

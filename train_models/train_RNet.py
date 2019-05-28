@@ -1,22 +1,19 @@
 #coding:utf-8
 from train_models.mtcnn_model import R_Net, cls_ohem, bbox_ohem, landmark_ohem, cal_accuracy
 from train_models.train import train
-from train_models.utils import get_dataset
+from train_models.utils import get_dataset, load_and_get_normalization_img
 import tensorflow as tf
 import time, os, sys
 tf.enable_eager_execution()
 
-def cls_loss(model, x, label):
-    cls_prob = model(x)[0]
-    return cls_ohem(cls_prob,label)
+def cls_loss(pred, label):
+    return cls_ohem(pred, label)
 
-def bbox_loss(model, x, bbox_target, label):
-    bbox_pred = model(x)[1]
-    return bbox_ohem(bbox_pred,bbox_target,label)
+def bbox_loss(pred, bbox_target, label):
+    return bbox_ohem(pred, bbox_target, label)
 
-def landmark_loss(model, x,landmark_target, label):
-    landmark_pred = model(x)[2]
-    return landmark_ohem(landmark_pred, landmark_target, label)
+def landmark_loss(pred, landmark_target, label):
+    return landmark_ohem(pred, landmark_target, label)
 
 
 def cls_acc(cls_pred, labels):
@@ -24,9 +21,10 @@ def cls_acc(cls_pred, labels):
 
 
 def loss(model, images, labels, bboxes, landmarks):
-    c_loss = cls_loss(model, images, labels)
-    b_loss = bbox_loss(model, images, bboxes, labels)
-    l_loss = landmark_loss(model, images, landmarks, labels)
+    pred = model(images)
+    c_loss = cls_loss(pred[0], labels)
+    b_loss = bbox_loss(pred[1], bboxes, labels)
+    l_loss = landmark_loss(pred[2], landmarks, labels)
     return c_loss + 0.5 * b_loss + 0.5 * l_loss
 
 def grad(model, images, labels, bboxes, landmarks):
@@ -55,15 +53,14 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
 
 
     # prepare for save
-    checkpoint_dir = prefix
-    os.makedirs(checkpoint_dir, exist_ok=True)
-    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    os.makedirs(prefix, exist_ok=True)
+    checkpoint_prefix = os.path.join(prefix, "ckpt")
     root = tf.train.Checkpoint(optimizer=optimizer, model=model)
-    root.restore(tf.train.latest_checkpoint(model_path)).assert_existing_objects_matched()
+    # root.restore(tf.train.latest_checkpoint(prefix)).assert_existing_objects_matched()
 
     display_step = 100
     now = time.time()
-    pred = now
+    pre = now
 
     print("start training")
     for epoch in range(end_epoch):
@@ -76,7 +73,13 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
             loss_value, grads = grad(model, images, labels, bboxes, landmarks)
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-            acc_value = cls_acc(model(images)[0], labels)
+            display_pred = model(images)
+            acc_value = cls_acc(display_pred[0], labels)
+            c_loss = cls_loss(display_pred[0], labels)
+            b_loss = bbox_loss(display_pred[1], bboxes, labels)
+            l_loss = landmark_loss(display_pred[2], landmarks, labels)
+            # l2_loss = tf.add_n(tf.losses.get_regularization_losses)
+            # total_loss, c_loss, b_loss, l_loss = loss_value
 
             epoch_loss_avg(loss_value)
             epoch_accuracy_avg(acc_value)
@@ -84,17 +87,22 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
             if i % display_step == 0:
                 now = time.time()
                 total_steps = total_num // batch_size
-                remaining_time = (now - pred) * (total_steps - i) / display_step // 60
-                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {2} mins. loss_value: {3} acc: {4}".format(i, 
-                                                                                                                                   total_steps, 
-                                                                                                                                   remaining_time,
-                                                                                                                                   loss_value.numpy(),
-                                                                                                                                   acc_value.numpy()))
+                remaining_time = (now - pre) * (total_steps - i) / display_step // 60
+                sys.stdout.write("\r>> {0} of {1} steps done. Estimated remaining time: {2} mins. \
+loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmark_loss: {7:.3f}".format(i, 
+                                                                                                        total_steps, 
+                                                                                                        remaining_time,
+                                                                                                        loss_value.numpy(),
+                                                                                                        acc_value.numpy(),
+                                                                                                        c_loss.numpy(),
+                                                                                                        b_loss.numpy(),
+                                                                                                        l_loss.numpy()))
                 sys.stdout.flush()  
-                pred = now
+                pre = now
 
-        print("\rEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
-
+        print("\nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
+        print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/7.jpg", 24), axis=0))[0])
+        print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/778.jpg", 24), axis=0))[0])
         # save model
         save_path = root.save(checkpoint_prefix)
         print("save prefix is {}".format(save_path))

@@ -60,7 +60,7 @@ def convert_to_square(bbox):
 
 def load_wider_face_gt_boxes(fpath, basedir=""): 
     """
-    get the information about all groud true of images in wider face datasets.
+        get the information about all groud true of images in wider face datasets.
     Parameter
     ---------------------
         fpath: the path of the txt file.
@@ -78,6 +78,8 @@ def load_wider_face_gt_boxes(fpath, basedir=""):
     i = 0
     while True:
         gt_box_num = 1 if int(lines[i+1]) == 0 else int(lines[i+1])
+        if int(lines[i+1]) == 0:
+            print("no face: ", i+1)
         gt_pos = np.zeros((gt_box_num, 4))
         for j, bbox_list in enumerate([x.split(' ')[:4] for x in lines[i+2:i+gt_box_num+2]]):
             gt_pos[j] = [float(x) for x in bbox_list]
@@ -192,3 +194,5 @@ def get_path(base_dir, filename):
     return os.path.join(base_dir, filename)
 
 
+if __name__ == "__main__":
+    data = load_wider_face_gt_boxes("wider_face_train_bbx_gt.txt", "E:/Document/Datasets/Wider Face/WIDER_train/images")

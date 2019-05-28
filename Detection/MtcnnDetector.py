@@ -2,6 +2,7 @@ import cv2
 import time
 import numpy as np
 import sys
+import tensorflow as tf
 
 sys.path.append("../")
 from train_models.MTCNN_config import config
@@ -124,7 +125,7 @@ class MtcnnDetector(object):
         return boundingbox.T
 
     # pre-process images
-    def processed_image(self, img, scale):
+    def processed_image(self, image, scale):
         '''
             rescale/resize the image according to the scale by multiply width and height with scale
         Parameter
@@ -135,13 +136,12 @@ class MtcnnDetector(object):
         --------------------
             resized image
         '''
-        height, width, channels = img.shape
-        new_height = int(height * scale)  # resized new height
-        new_width = int(width * scale)  # resized new width
-        new_dim = (new_width, new_height)
-        img_resized = cv2.resize(img, new_dim, interpolation=cv2.INTER_LINEAR)  # resized image
-        img_resized = (img_resized - 127.5) / 128
-        return img_resized
+        w_dimension, h_dimension, _ = image.get_shape()
+        width = w_dimension.value
+        height = h_dimension.value
+        image = tf.image.resize(image, [int(width*scale), int(height*scale)])
+        image /= 255.0
+        return image
 
     def pad(self, bboxes, w, h):
         """
@@ -230,8 +230,8 @@ class MtcnnDetector(object):
             # reg: H*w*4
             # class_prob andd bbox_pred
             cls_cls_map, reg = self.pnet_detector.predict(im_resized) #用训练好的模型预测
-            maxseses = cls_cls_map[:, :, 1]
-            print(np.max(np.max(maxseses, axis=1)), np.argmax(np.max(maxseses, axis=1)), np.argmax(np.max(maxseses, axis=0)), np.max(cls_cls_map[:, :, 1], axis=1), current_height)
+            # maxseses = cls_cls_map[:, :, 1]
+            # print(np.max(np.max(maxseses, axis=1)), np.argmax(np.max(maxseses, axis=1)), np.argmax(np.max(maxseses, axis=0)), np.max(cls_cls_map[:, :, 1], axis=1), current_height)
             # boxes: num*9(x1,y1,x2,y2,score,x1_offset,y1_offset,x2_offset,y2_offset)
             boxes = self.generate_bbox(cls_cls_map[:, :, 1], reg, current_scale, self.thresh[0])
             # scale_factor is 0.79 in default
@@ -287,7 +287,9 @@ class MtcnnDetector(object):
         boxes_c: numpy array
             boxes after calibration
         """
-        h, w, c = im.shape
+        h, w, _ = im.shape
+        h = h.value
+        w = w.value
         dets = self.convert_to_square(dets)
         dets[:, 0:4] = np.round(dets[:, 0:4])
 
@@ -297,7 +299,7 @@ class MtcnnDetector(object):
         for i in range(num_boxes):
             tmp = np.zeros((tmph[i], tmpw[i], 3), dtype=np.uint8)
             tmp[dy[i]:edy[i] + 1, dx[i]:edx[i] + 1, :] = im[y[i]:ey[i] + 1, x[i]:ex[i] + 1, :]
-            cropped_ims[i, :, :, :] = (cv2.resize(tmp, (24, 24)) - 127.5) / 128
+            cropped_ims[i, :, :, :] = cv2.resize(tmp, (24, 24)) / 255.
         # cls_scores : num_data*2
         # reg: num_data*4
         # landmark: num_data*10
@@ -435,8 +437,8 @@ class MtcnnDetector(object):
                 print('%f seconds for each image' % c_time)
                 s_time = time.time()
 
-
-            im = cv2.imread(img_path)
+            im = tf.io.read_file(img_path)
+            im = tf.image.decode_jpeg(im, channels=3)
             # pnet
             if self.pnet_detector and pnet_detections is None: # detector[0]
                 st = time.time()

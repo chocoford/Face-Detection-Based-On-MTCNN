@@ -13,8 +13,8 @@ import tensorflow as tf
 
 tf.enable_eager_execution()
 
-test_mode = "PNet"
-thresh = [0.6, 0.7, 0.7]
+test_mode = "RNet"
+thresh = [0.9, 0.9, 0.7]
 min_face_size = 20
 stride = 2
 slide_window = False
@@ -53,10 +53,10 @@ for imagepath in test_img_path:
     print(imagepath)
     image = cv2.imread(imagepath)
     for bbox in all_boxes[count]:
-        # if bbox[4] < 0.9:
-        #     continue
+        if bbox[4] < 0.9:
+            continue
         cv2.putText(image, str(np.round(bbox[4],2)), (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_TRIPLEX, 1, color=(255,0,255))
-        cv2.rectangle(image, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])),(0,0,255), 1)
+        cv2.rectangle(image, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])),(0,0,255), 2)
         if bbox[0] < 0:
             print("there is a bbox[0] < 0", bbox[0])
     # for landmark in landmarks[count]:
@@ -66,4 +66,4 @@ for imagepath in test_img_path:
     count = count + 1
     cv2.namedWindow("test result",0)
     cv2.imshow("test result",image)
-    cv2.waitKey(0)
+    cv2.waitKey(0) 

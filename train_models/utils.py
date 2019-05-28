@@ -10,7 +10,8 @@ def load_and_get_normalization_img(path, size=12):
     image = tf.io.read_file(path)
     image = tf.image.decode_jpeg(image, channels=3)
     image = tf.image.resize(image, [size, size])
-    image = (image - 127.5) / 128.0  # normalize to [0,1] range
+    image = tf.cast(image, tf.float32)
+    image /= 255.0  # normalize to [0,1] range
     return image
 
 
@@ -29,15 +30,15 @@ def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
         tuple: (num of samples, dataset)
     """
     net = path[-4:]
-    if net == "PNet":
-        size = 12
-    elif net == "RNet":
-        size = 24
-    elif net == "ONet":
-        size = 48
-    else:
-        print("unknown net: ", net)
-        exit(-1)
+    # if net == "PNet":
+    #     size = 12
+    # elif net == "RNet":
+    #     size = 24
+    # elif net == "ONet":
+    #     size = 48
+    # else:
+    #     print("unknown net: ", net)
+    #     exit(-1)
 
     item = 'train_%s_landmark.txt' % net
     dataset_dir = os.path.join(path, item)
@@ -115,8 +116,8 @@ after keeping ratios. {} samples in total".format(all_image_labels.count(1),
 
     def preprocess_image(image):
         image = tf.image.decode_jpeg(image, channels=3)
-        image = tf.image.resize(image, [size, size])
-        image = (image - 127.5) / 128.0  # normalize to [-1,1] range
+        image = tf.cast(image, tf.float32)
+        image /= 255.0 # normalize to [-1,1] range
         return image
 
     def load_and_preprocess_image(path):
@@ -187,7 +188,8 @@ if __name__ == "__main__":
     assert(tf.executing_eagerly())
 
     num, dataset = get_dataset("../data/imglists/PNet")
-    for image, target in dataset.take(1):
+    for image, target in dataset.take(10):
         plt.figure()
-        plt.imshow(image)
+        plt.imshow(image[0])
+        print(target[0][0])
         plt.show()

@@ -11,7 +11,8 @@ def load_and_get_normalization_img(path, size=12):
     image = tf.image.decode_jpeg(image, channels=3)
     image = tf.image.resize(image, [size, size])
     image = tf.cast(image, tf.float32)
-    image /= 255.0  # normalize to [0,1] range
+    image -= 127.5
+    image /= 128.0  # normalize to [0,1] range
     return image
 
 
@@ -39,7 +40,6 @@ def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
     # else:
     #     print("unknown net: ", net)
     #     exit(-1)
-
     item = 'train_%s_landmark.txt' % net
     dataset_dir = os.path.join(path, item)
 
@@ -117,13 +117,13 @@ after keeping ratios. {} samples in total".format(all_image_labels.count(1),
     def preprocess_image(image):
         image = tf.image.decode_jpeg(image, channels=3)
         image = tf.cast(image, tf.float32)
-        image /= 255.0 # normalize to [-1,1] range
+        image -= 127.5
+        image /= 128.0 # normalize to [-1,1] range
         return image
 
     def load_and_preprocess_image(path):
         image = tf.io.read_file(path)
         return preprocess_image(image)
-        # return tf.zeros((12, 12, 3))
 
     path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
     # print(path_ds)

@@ -82,12 +82,15 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     os.makedirs(prefix, exist_ok=True)
     checkpoint_prefix = os.path.join(prefix, "ckpt")
     root = tf.train.Checkpoint(optimizer=optimizer, model=model, optimizer_step=tf.train.get_or_create_global_step()) 
-    root.restore(tf.train.latest_checkpoint(prefix)).assert_existing_objects_matched()
+    # root.restore(tf.train.latest_checkpoint(prefix)).assert_existing_objects_matched()
     display_step = 100
 
     #estimate time left
     now = time.time()
     pre = now
+
+    #logs
+    fpath = prefix+"/logs.txt"
 
     print("start training")
     for epoch in range(end_epoch):
@@ -129,12 +132,16 @@ loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmar
                 pre = now
 
         print("\nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
-        print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/7.jpg"), axis=0))[0])
-        print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/778.jpg"), axis=0))[0])
+        print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/7.jpg"), axis=0))[0].numpy())
+        print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/glass.jpg"), axis=0))[0].numpy())
 
         # save model
         save_path = root.save(checkpoint_prefix)
         print("save prefix is {}".format(save_path))
+
+        #save logs
+        with open(fpath, 'a+') as f:
+            f.write("{0}: Loss: {1} Accuracy: {2}\n".format(save_path, epoch_loss_avg.result(), epoch_accuracy_avg.result()))         
 
 if __name__ == '__main__':
     #data path

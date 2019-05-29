@@ -3,7 +3,7 @@ import sys
 sys.path.append('..')
 from Detection.MtcnnDetector import MtcnnDetector
 from Detection.detector import Detector
-from Detection.fcn_detector import FcnDetector
+from Detection.fcn_detector import FCNDetector
 from train_models.mtcnn_model import P_Net, R_Net, O_Net
 from prepare_data.loader import TestLoader
 import cv2

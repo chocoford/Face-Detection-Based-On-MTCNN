@@ -140,7 +140,8 @@ class MtcnnDetector(object):
         width = w_dimension.value
         height = h_dimension.value
         image = tf.image.resize(image, [int(width*scale), int(height*scale)])
-        image /= 255.0
+        image -= 127.5
+        image /= 128.0
         return image
 
     def pad(self, bboxes, w, h):

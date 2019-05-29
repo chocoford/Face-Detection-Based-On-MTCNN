@@ -1,5 +1,5 @@
 #coding:utf-8
-import sys
+import sys, queue, threading
 sys.path.append('..')
 from Detection.MtcnnDetector import MtcnnDetector
 from Detection.detector import Detector

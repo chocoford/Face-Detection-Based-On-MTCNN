@@ -65,21 +65,29 @@ if detect_mode == Detect_mode.concurrent:
     detect_thread = Detect_thread(result_queue, None)
     detect_thread.start()
 
-
 while True:
-    # fps = video_capture.get(cv2.CAP_PROP_FPS)
-    t1 = cv2.getTickCount()
     ret, frame = video_capture.read()
     if ret:
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        image = tf.constant(np.array(rgb_frame))
+        image = np.array(frame)
         
-        boxes_c,landmarks = mtcnn_detector.detect(image)
+        if detect_mode == Detect_mode.concurrent:
+            detect_thread.image = image
+            if not result_queue.empty():
+                boxes_c,landmarks = result_queue.get()
+                
+            fps = video_capture.get(cv2.CAP_PROP_FPS)
+            t = detect_thread.get_t()
+            
+        else:
+            t1 = cv2.getTickCount()
+            boxes_c,landmarks = mtcnn_detector.detect(image)
+            t2 = cv2.getTickCount()
+            t = (t2 - t1) / cv2.getTickFrequency()
+            fps = 1.0 / t
+        
 
         # print(landmarks.shape)
-        t2 = cv2.getTickCount()
-        t = (t2 - t1) / cv2.getTickFrequency()
-        fps = 1.0 / t
+         
         for i in range(boxes_c.shape[0]):
             bbox = boxes_c[i, :4]
             score = boxes_c[i, 4]

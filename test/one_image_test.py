@@ -13,8 +13,8 @@ import tensorflow as tf
 
 tf.enable_eager_execution()
 
-test_mode = "RNet"
-thresh = [0.6, 0.6, 0.7]
+test_mode = "ONet"
+thresh = [0.6, 0.7, 0.7]
 min_face_size = 20
 stride = 2
 slide_window = False

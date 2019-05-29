@@ -31,6 +31,8 @@ class FCNDetector(object):
         databatch = tf.cast(databatch, tf.float32)
         pred = self.model(databatch)
         cls_prob, bbox_pred, _ = pred
+        cls_prob = np.array(cls_prob)
+        bbox_pred = np.array(bbox_pred)
         assert(cls_prob.shape[3]==2 and bbox_pred.shape[3]==4)
         cls_prob = np.squeeze(cls_prob, axis=0)
         bbox_pred = np.squeeze(bbox_pred, axis=0)

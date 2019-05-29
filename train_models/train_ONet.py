@@ -53,7 +53,7 @@ def train_ONet(base_dir, checkpoint_dir, end_epoch, display_step, lr):
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     root = tf.train.Checkpoint(optimizer=optimizer, model=model)
     # if continue training process
-    # root.restore(tf.train.latest_checkpoint(prefix)).assert_existing_objects_matched()
+    root.restore(tf.train.latest_checkpoint(prefix)).assert_existing_objects_matched()
 
 
     now = time.time()

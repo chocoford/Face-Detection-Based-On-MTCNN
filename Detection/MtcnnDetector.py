@@ -224,7 +224,7 @@ class MtcnnDetector(object):
         #print('current height and width:',current_height,current_width)
         # fcn
         all_boxes = list()
-        while min(current_height, current_width) > net_size:
+        while min(current_height.value, current_width.value) > net_size:
             # return the result predicted by pnet
             # cls_cls_map : H*w*2
             # reg: H*w*4
@@ -336,7 +336,9 @@ class MtcnnDetector(object):
         boxes_c: numpy array
             boxes after calibration
         """
-        h, w, c = im.shape
+        h, w, _ = im.shape
+        h = h.value
+        w = w.value
         dets = self.convert_to_square(dets)
         dets[:, 0:4] = np.round(dets[:, 0:4])
         [dy, edy, dx, edx, y, ey, x, ex, tmpw, tmph] = self.pad(dets, w, h)

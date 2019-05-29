@@ -3,10 +3,13 @@ import sys
 sys.path.append('..')
 from Detection.MtcnnDetector import MtcnnDetector
 from Detection.detector import Detector
-from Detection.fcn_detector import FcnDetector
+from Detection.fcn_detector import FCNDetector
 from train_models.mtcnn_model import P_Net, R_Net, O_Net
 import cv2
 import numpy as np
+import tensorflow as tf
+tf.enable_eager_execution()
+
 
 test_mode = "onet"
 thresh = [0.9, 0.6, 0.7]
@@ -16,19 +19,15 @@ slide_window = False
 shuffle = False
 #vis = True
 detectors = [None, None, None]
-prefix = ['data/MTCNN_model/PNet_landmark/PNet', 'data/MTCNN_model/RNet_landmark/RNet', 'data/MTCNN_model/ONet_landmark/ONet']
-epoch = [30, 22, 22]
-model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
-PNet = FcnDetector(P_Net, model_path[0])
+prefix = ['../data/ultramodern_model/PNet', '../data/ultramodern_model/RNet', '../data/ultramodern_model/ONet']
+PNet = FCNDetector(P_Net, prefix[0])
 detectors[0] = PNet
-RNet = Detector(R_Net, 24, 1, model_path[1])
+RNet = Detector(R_Net, 24, 1, prefix[1])
 detectors[1] = RNet
-ONet = Detector(O_Net, 48, 1, model_path[2])
+ONet = Detector(O_Net, 48, 1, prefix[2])
 detectors[2] = ONet
-videopath = "./video_test.avi"
 mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
                                stride=stride, threshold=thresh, slide_window=slide_window)
-
 video_capture = cv2.VideoCapture(0)
 video_capture.set(3, 340)
 video_capture.set(4, 480)
@@ -38,7 +37,8 @@ while True:
     t1 = cv2.getTickCount()
     ret, frame = video_capture.read()
     if ret:
-        image = np.array(frame)
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image = tf.constant(np.array(rgb_frame))
         
         boxes_c,landmarks = mtcnn_detector.detect(image)
 

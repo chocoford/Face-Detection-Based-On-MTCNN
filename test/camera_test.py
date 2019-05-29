@@ -32,10 +32,40 @@ ONet = Detector(O_Net, 48, 1, prefix[2])
 detectors[2] = ONet
 mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
                                stride=stride, threshold=thresh, slide_window=slide_window)
+
 video_capture = cv2.VideoCapture(0)
-video_capture.set(3, 340)
-video_capture.set(4, 480)
+video_capture.set(3, 900)
+video_capture.set(4, 1440)
 corpbbox = None
+boxes_c, landmarks = np.array([]), np.array([])
+
+class Detect_thread(threading.Thread):
+    def __init__(self, q, image):
+        super(Detect_thread,self).__init__()
+        self.image = image
+        self.q = q
+        self.t = 0
+    def run(self):
+        while True:
+            if self.image is None or not self.q.empty():
+                continue
+            t1 = cv2.getTickCount()
+            p = mtcnn_detector.detect(image)
+            t2 = cv2.getTickCount()
+            self.t = t2 - t1
+            # if self.q.empty():
+            self.q.put(p)
+            
+
+    def get_t(self):
+        return self.t / cv2.getTickFrequency()
+
+if detect_mode == Detect_mode.concurrent:
+    result_queue = queue.Queue()
+    detect_thread = Detect_thread(result_queue, None)
+    detect_thread.start()
+
+
 while True:
     # fps = video_capture.get(cv2.CAP_PROP_FPS)
     t1 = cv2.getTickCount()

@@ -1,0 +1,13 @@
+../data/ultramodern_model/PNet\ckpt-1: Loss: 0.5133097767829895 Accuracy: 0.8705613017082214
+../data/ultramodern_model/PNet\ckpt-2: Loss: 0.3790251612663269 Accuracy: 0.9127451181411743
+../data/ultramodern_model/PNet\ckpt-3: Loss: 0.3500594198703766 Accuracy: 0.9202542304992676
+../data/ultramodern_model/PNet\ckpt-4: Loss: 0.3350387215614319 Accuracy: 0.9241039752960205
+../data/ultramodern_model/PNet\ckpt-5: Loss: 0.3244580924510956 Accuracy: 0.9267604947090149
+../data/ultramodern_model/PNet\ckpt-6: Loss: 0.3178059160709381 Accuracy: 0.9286101460456848
+../data/ultramodern_model/PNet\ckpt-7: Loss: 0.310873419046402 Accuracy: 0.9302002787590027
+../data/ultramodern_model/PNet\ckpt-8: Loss: 0.3059225082397461 Accuracy: 0.9316762089729309
+../data/ultramodern_model/PNet\ckpt-9: Loss: 0.3020106554031372 Accuracy: 0.9323721528053284
+../data/ultramodern_model/PNet\ckpt-10: Loss: 0.2987077534198761 Accuracy: 0.933474600315094
+../data/ultramodern_model/PNet\ckpt-11: Loss: 0.2971085011959076 Accuracy: 0.9337701797485352
+../data/ultramodern_model/PNet\ckpt-12: Loss: 0.293783962726593 Accuracy: 0.9346283078193665
+../data/ultramodern_model/PNet\ckpt-13: Loss: 0.2918214201927185 Accuracy: 0.9349592924118042

@@ -1,24 +1,24 @@
 #coding:utf-8
-import sys
-
+import sys, os
 
 sys.path.append("..")
 import argparse
 from train_models.mtcnn_model import P_Net, R_Net, O_Net
 from prepare_data.loader import TestLoader
 from Detection.detector import Detector
-from Detection.fcn_detector import FcnDetector
+from Detection.fcn_detector import FCNDetector
 from Detection.MtcnnDetector import MtcnnDetector
 import cv2
-import os
-data_dir = '../../DATA/'
-out_dir = '../../DATA/FDDB_OUTPUT'
+import tensorflow as tf
+
+data_dir = 'E:/Document/Datasets/FDDB'
+out_dir = '../data/FDDB_OUTPUT'
 
 def get_imdb_fddb(data_dir):
     imdb = []
     nfold = 10
     for n in range(nfold):
-        file_name = 'FDDB-folds/FDDB-folds/FDDB-fold-%02d.txt' % (n + 1)
+        file_name = 'FDDB-folds/FDDB-fold-%02d.txt' % (n + 1)
         file_name = os.path.join(data_dir, file_name)
         fid = open(file_name, 'r')
         image_names = []
@@ -30,6 +30,8 @@ def get_imdb_fddb(data_dir):
 
 
 if __name__ == "__main__":
+    tf.enable_eager_execution()
+
     test_mode = "ONet"
     thresh = [0.6,0.35,0.01]
     min_face_size = 20
@@ -38,25 +40,20 @@ if __name__ == "__main__":
     shuffle = False
     vis = False
     detectors = [None, None, None]
-    prefix = ['../data/MTCNN_model/PNet_landmark/PNet', '../data/MTCNN_model/RNet_landmark/RNet', '../data/MTCNN_model/ONet_landmark/ONet']
-    epoch = [18, 14, 16]
+    prefix = ['data/ultramodern_model/PNet', 'data/ultramodern_model/RNet', 'data/ultramodern_model/ONet']
     batch_size = [2048, 256, 16]
-    model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
     # load pnet model
-    if slide_window:
-        PNet = Detector(P_Net, 12, batch_size[0], model_path[0])
-    else:
-        PNet = FcnDetector(P_Net, model_path[0])
+    PNet = FCNDetector(P_Net, prefix[0])
     detectors[0] = PNet
     
     # load rnet model
     if test_mode in ["RNet", "ONet"]:
-        RNet = Detector(R_Net, 24, batch_size[1], model_path[1])
+        RNet = Detector(R_Net, 24, batch_size[1], prefix[1])
         detectors[1] = RNet
     
     # load onet model
     if test_mode == "ONet":
-        ONet = Detector(O_Net, 48, batch_size[2], model_path[2])
+        ONet = Detector(O_Net, 48, batch_size[2], prefix[2])
         detectors[2] = ONet
     
     mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
@@ -72,9 +69,9 @@ if __name__ == "__main__":
         dets_file_name = os.path.join(out_dir, 'FDDB-det-fold-%02d.txt' % (i + 1))
         fid = open(dets_file_name,'w')
         sys.stdout.write('%s ' % (i + 1))
-        image_names_abs = [os.path.join(data_dir,'originalPics',image_name+'.jpg') for image_name in image_names]
-        test_data = TestLoader(image_names_abs)
-        all_boxes,_ = mtcnn_detector.detect_face(test_data)
+        image_names_abs = [os.path.join(data_dir,image_name+'.jpg') for image_name in image_names]
+        # test_data = TestLoader(image_names_abs)
+        all_boxes,_ = mtcnn_detector.detect_face(image_names_abs)
         
         for idx,im_name in enumerate(image_names):
             img_path = os.path.join(data_dir,'originalPics',im_name+'.jpg')

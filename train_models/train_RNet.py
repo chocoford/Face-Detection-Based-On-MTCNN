@@ -20,8 +20,7 @@ def cls_acc(cls_pred, labels):
     return cal_accuracy(cls_pred, labels)
 
 
-def loss(model, images, labels, bboxes, landmarks):
-    pred = model(images)
+def get_total_loss(pred, labels, bboxes, landmarks):
     c_loss = cls_loss(pred[0], labels)
     b_loss = bbox_loss(pred[1], bboxes, labels)
     l_loss = landmark_loss(pred[2], landmarks, labels)
@@ -29,7 +28,8 @@ def loss(model, images, labels, bboxes, landmarks):
 
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
-        loss_value = loss(model, images, labels, bboxes, landmarks)
+        pred = model(images, True)
+        loss_value = get_total_loss(pred, labels, bboxes, landmarks)
     return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
 
@@ -48,7 +48,7 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
     # train(net_factory, prefix, end_epoch, base_dir, display=display, base_lr=lr)
     model = R_Net()
     batch_size = 512
-    total_num, train_dataset = get_dataset(base_dir, batch_size=batch_size)
+    total_num, train_dataset, validation_dataset = get_dataset(base_dir, batch_size=batch_size)
     optimizer = tf.train.AdamOptimizer()
 
 
@@ -62,10 +62,15 @@ def train_RNet(base_dir, prefix, end_epoch, display, lr):
     now = time.time()
     pre = now
 
+    #logs
+    fpath = prefix+"/logs.txt"
+
     print("start training")
     for epoch in range(end_epoch):
         epoch_loss_avg = tf.keras.metrics.Mean()
         epoch_accuracy_avg = tf.keras.metrics.Mean()
+        epoch_val_loss_avg = tf.keras.metrics.Mean()
+        epoch_val_acc_avg = tf.keras.metrics.Mean()
 
         for i, train_batch in enumerate(train_dataset):
             images, target_batch = train_batch
@@ -100,14 +105,35 @@ loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmar
                 sys.stdout.flush()  
                 pre = now
 
-        print("\nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
+        for i, val_batch in enumerate(validation_dataset):
+            images, target_batch = val_batch
+            labels, bboxes, landmarks = target_batch
+            display_pred = model(images)
+            acc_value = cls_acc(display_pred[0], labels)
+            val_loss = get_total_loss(display_pred, labels, bboxes, landmarks)
+            epoch_val_loss_avg(val_loss)
+            epoch_val_acc_avg(acc_value)
+
+
+
+        print("\nEpoch {0}: Loss: {1} Accuracy: {2} val_loss: {3} val_acc: {4}".format(epoch, 
+                                                                                       epoch_loss_avg.result(), 
+                                                                                       epoch_accuracy_avg.result(),
+                                                                                       epoch_val_loss_avg.result(),
+                                                                                       epoch_val_acc_avg.result()))
         print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/7.jpg", 24), axis=0))[0])
         print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/778.jpg", 24), axis=0))[0])
         # save model
         save_path = root.save(checkpoint_prefix)
         print("save prefix is {}".format(save_path))
 
-
+        #save logs
+        with open(fpath, 'a+') as f:
+            f.write("{0}: Loss: {1} Accuracy: {2} Val_Loss: {3} Val_Acc: {4}\n".format(save_path, 
+                                                                                  epoch_loss_avg.result(),
+                                                                                  epoch_accuracy_avg.result(),
+                                                                                  epoch_val_loss_avg.result(),
+                                                                                  epoch_val_acc_avg.result()))
 
 
 if __name__ == '__main__':

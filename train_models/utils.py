@@ -45,11 +45,6 @@ def get_dataset(path, batch_size=256, ratios=[1, 3, 1, 1]):
 
     imagelist = open(dataset_dir, 'r')
 
-    all_image_paths = []
-    all_image_labels = []
-    all_image_bboxes = []
-    all_image_landmarks = []
-
     pos_lines = []
     neg_lines = []
     part_lines = []
@@ -76,11 +71,16 @@ before keeping ratios. {} samples in total".format(len(pos_lines),
                                                    len(part_lines), 
                                                    len(landmark_lines),
                                                    len(lines)))
-    base_num = min(len(pos_lines), len(neg_lines), len(part_lines), len(landmark_lines))
+    min_lines_num = min(len(pos_lines), len(neg_lines), len(part_lines), len(landmark_lines))
+    base_num = min_lines_num \
+        if max(ratios) * min_lines_num <= max(len(pos_lines), len(neg_lines), len(part_lines), len(landmark_lines)) \
+                else max(len(pos_lines), len(neg_lines), len(part_lines), len(landmark_lines)) / max(ratios)
+    base_num -= 100
     pos_num = ratios[0] * base_num
     neg_num = ratios[1] * base_num
     part_num = ratios[2] * base_num
     landmark_num = ratios[3] * base_num    
+
 
     random.shuffle(pos_lines)
     random.shuffle(neg_lines)
@@ -90,29 +90,43 @@ before keeping ratios. {} samples in total".format(len(pos_lines),
     shuffled_lines = pos_lines[:pos_num] + neg_lines[:neg_num] + part_lines[:part_num] + landmark_lines[:landmark_num]
     random.shuffle(shuffled_lines)
 
-    for line in shuffled_lines:
-        info = line.strip().split(' ')
-        all_image_paths.append(info[0])
-        all_image_labels.append(float(info[1]))
-        if len(info) == 6:
-            all_image_bboxes.append((float(info[2]), float(info[3]), float(info[4]), float(info[5])))
-            all_image_landmarks.append((0., 0., 0., 0., 0., 0., 0., 0., 0., 0.))
-        elif len(info) == 12:
-            all_image_bboxes.append((0., 0., 0., 0.))
-            all_image_landmarks.append((float(info[2]), float(info[3]), float(info[4]), float(info[5]), 
-                                        float(info[6]), float(info[7]), float(info[8]), float(info[9]),
-                                        float(info[10]), float(info[11])
-                                        ))
-        else:
-            all_image_bboxes.append((0., 0., 0., 0.))
-            all_image_landmarks.append((0., 0., 0., 0., 0., 0., 0., 0., 0., 0.))
 
-    print("There are {} pos samples, {} neg samples, {} part samples and {} landmark samples \
+    val_num_per_label = 5000
+    remain_lines = (pos_lines[pos_num:pos_num+val_num_per_label] if pos_num+val_num_per_label <= len(pos_lines) else pos_lines[pos_num:]) \
+        + (neg_lines[neg_num:neg_num+val_num_per_label] if neg_num+val_num_per_label <= len(neg_lines) else neg_lines[neg_num:]) \
+            + (part_lines[part_num:pos_num+val_num_per_label] if part_num+val_num_per_label <= len(part_lines) else part_lines[part_num:]) \
+                + (landmark_lines[landmark_num:landmark_num+val_num_per_label] if landmark_num+val_num_per_label <= len(landmark_lines) else landmark_lines[landmark_num:])
+    random.shuffle(remain_lines)
+
+    def get_info(shuffled_lines):
+        all_image_paths = []
+        all_image_labels = []
+        all_image_bboxes = []
+        all_image_landmarks = []
+        for line in shuffled_lines:
+            info = line.strip().split(' ')
+            all_image_paths.append(info[0])
+            all_image_labels.append(float(info[1]))
+            if len(info) == 6:
+                all_image_bboxes.append((float(info[2]), float(info[3]), float(info[4]), float(info[5])))
+                all_image_landmarks.append((0., 0., 0., 0., 0., 0., 0., 0., 0., 0.))
+            elif len(info) == 12:
+                all_image_bboxes.append((0., 0., 0., 0.))
+                all_image_landmarks.append((float(info[2]), float(info[3]), float(info[4]), float(info[5]), 
+                                            float(info[6]), float(info[7]), float(info[8]), float(info[9]),
+                                            float(info[10]), float(info[11])
+                                            ))
+            else:
+                all_image_bboxes.append((0., 0., 0., 0.))
+                all_image_landmarks.append((0., 0., 0., 0., 0., 0., 0., 0., 0., 0.))
+
+        print("There are {} pos samples, {} neg samples, {} part samples and {} landmark samples \
 after keeping ratios. {} samples in total".format(all_image_labels.count(1), 
                                                   all_image_labels.count(0), 
                                                   all_image_labels.count(-1), 
                                                   all_image_labels.count(-2),
                                                   len(shuffled_lines)))
+        return all_image_paths, all_image_labels, all_image_bboxes, all_image_landmarks
 
     def preprocess_image(image):
         image = tf.image.decode_jpeg(image, channels=3)
@@ -125,8 +139,10 @@ after keeping ratios. {} samples in total".format(all_image_labels.count(1),
         image = tf.io.read_file(path)
         return preprocess_image(image)
 
+    # get training datasets
+    all_image_paths, all_image_labels, all_image_bboxes, all_image_landmarks = get_info(shuffled_lines)
+
     path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
-    # print(path_ds)
     image_ds = path_ds.map(load_and_preprocess_image, num_parallel_calls=tf.data.experimental.AUTOTUNE) 
     label_ds = tf.data.Dataset.from_tensor_slices(all_image_labels)
     bbox_ds = tf.data.Dataset.from_tensor_slices(all_image_bboxes)
@@ -134,16 +150,32 @@ after keeping ratios. {} samples in total".format(all_image_labels.count(1),
     target_ds = tf.data.Dataset.zip((label_ds, bbox_ds, landmark_ds))
 
     image_label_bbox_landmarks_ds = tf.data.Dataset.zip((image_ds, target_ds))
-    # print(image_label_bbox_landmarks_ds)
 
     ds = image_label_bbox_landmarks_ds.cache()
     ds = ds.shuffle(buffer_size=10000)
-    # ds = ds.repeat()
     ds = ds.batch(batch_size)
     ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     print("get dataset done.")
 
-    return len(all_image_paths), ds
+    # let the remaining data being validation dataset
+    val_image_paths, val_image_labels, val_image_bboxes, val_image_landmarks = get_info(remain_lines)
+
+    val_path_ds = tf.data.Dataset.from_tensor_slices(val_image_paths)
+    val_image_ds = val_path_ds.map(load_and_preprocess_image, num_parallel_calls=tf.data.experimental.AUTOTUNE) 
+    val_label_ds = tf.data.Dataset.from_tensor_slices(val_image_labels)
+    val_bbox_ds = tf.data.Dataset.from_tensor_slices(val_image_bboxes)
+    val_landmark_ds = tf.data.Dataset.from_tensor_slices(val_image_landmarks)
+    val_target_ds = tf.data.Dataset.zip((val_label_ds, val_bbox_ds, val_landmark_ds))
+
+    val_image_label_bbox_landmarks_ds = tf.data.Dataset.zip((val_image_ds, val_target_ds))
+
+    val_ds = val_image_label_bbox_landmarks_ds.cache()
+    val_ds = val_ds.shuffle(buffer_size=1024)
+    val_ds = val_ds.batch(batch_size)
+    val_ds = val_ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    print("get validation dataset done.")
+
+    return len(all_image_paths), ds, val_ds
 
 
 def random_flip_images(image_batch,label_batch,landmark_batch):

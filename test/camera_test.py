@@ -16,7 +16,7 @@ class Detect_mode():
 
 detect_mode = Detect_mode.concurrent
 test_mode = "onet"
-thresh = [0.9, 0.6, 0.7]
+thresh = [0.9, 0.9, 0.9]
 min_face_size = 24
 stride = 2
 slide_window = False
@@ -68,7 +68,8 @@ if detect_mode == Detect_mode.concurrent:
 while True:
     ret, frame = video_capture.read()
     if ret:
-        image = np.array(frame)
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image = tf.constant(np.array(rgb_frame))
         
         if detect_mode == Detect_mode.concurrent:
             detect_thread.image = image

@@ -25,13 +25,12 @@ def cls_acc(cls_pred, labels):
     return cal_accuracy(cls_pred, labels)
 
 
-def total_loss(model, images, labels, bboxes, landmarks):
+def get_total_loss(pred, labels, bboxes, landmarks):
     """
     Return
     --------------------
         (total_loss, cls_loss, bbox_loss, landmark_loss)
     """
-    pred = model(images)
     c_loss = cls_loss(pred[0], labels)
     b_loss = bbox_loss(pred[1], bboxes, labels)
     l_loss = landmark_loss(pred[2], landmarks, labels)
@@ -42,7 +41,8 @@ def total_loss(model, images, labels, bboxes, landmarks):
 def grad(model, images, labels, bboxes, landmarks):
     with tf.GradientTape() as tape:
         # must execute model(x) in the context of tf.GradientTape()
-        loss_value = total_loss(model, images, labels, bboxes, landmarks)
+        pred = model(images)
+        loss_value = get_total_loss(pred, labels, bboxes, landmarks)
     return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
 
@@ -61,8 +61,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     """
     model = P_Net()
     batch_size = 512
-    total_num, train_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
-
+    total_num, train_dataset, validation_dataset = get_dataset("../data/imglists/PNet", batch_size=batch_size)
     optimizer = tf.train.AdamOptimizer()
     # callbacks = [tf.keras.callbacks.ModelCheckpoint("../data/ultramodern_model/PNet/pnet.h5",
     #                                                 monitor="multi_loss", 
@@ -96,13 +95,16 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
     for epoch in range(end_epoch):
         epoch_loss_avg = tf.keras.metrics.Mean()
         epoch_accuracy_avg = tf.keras.metrics.Mean()
+        epoch_val_loss_avg = tf.keras.metrics.Mean()
+        epoch_val_acc_avg = tf.keras.metrics.Mean()
+
 
         for i, train_batch in enumerate(train_dataset):
             images, target_batch = train_batch
             labels, bboxes, landmarks = target_batch
             images = image_color_distort(images)
             # images, landmarks = random_flip_images(images, labels, landmarks)
-            total_loss, grads = grad(model, images, labels, bboxes, landmarks)
+            loss_value, grads = grad(model, images, labels, bboxes, landmarks)
             optimizer.apply_gradients(zip(grads, model.trainable_variables), global_step=tf.train.get_or_create_global_step())
 
             display_pred = model(images)
@@ -110,9 +112,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
             c_loss = cls_loss(display_pred[0], labels)
             b_loss = bbox_loss(display_pred[1], bboxes, labels)
             l_loss = landmark_loss(display_pred[2], landmarks, labels)
-            # l2_loss = tf.add_n(tf.losses.get_regularization_losses)
-            # total_loss, c_loss, b_loss, l_loss = loss_value
-            epoch_loss_avg(total_loss)
+            epoch_loss_avg(loss_value)
             epoch_accuracy_avg(acc_value)
 
             if i % display_step == 0:
@@ -123,7 +123,7 @@ def train_PNet(base_dir, prefix, end_epoch, display, lr):
 loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmark_loss: {7:.3f}".format(i, 
                                                                                                         total_steps, 
                                                                                                         remaining_time,
-                                                                                                        total_loss.numpy(),
+                                                                                                        loss_value.numpy(),
                                                                                                         acc_value.numpy(),
                                                                                                         c_loss.numpy(),
                                                                                                         b_loss.numpy(),
@@ -131,7 +131,20 @@ loss_value: {3:.3f} acc: {4:.3f}. cls_loss: {5:.3f}, bbox_loss: {6:.3f}, landmar
                 sys.stdout.flush()  
                 pre = now
 
-        print("\nEpoch {0}: Loss: {1} Accuracy: {2}".format(epoch, epoch_loss_avg.result(), epoch_accuracy_avg.result()))
+        for i, val_batch in enumerate(validation_dataset):
+            images, target_batch = val_batch
+            labels, bboxes, landmarks = target_batch
+            display_pred = model(images)
+            acc_value = cls_acc(display_pred[0], labels)
+            val_loss = get_total_loss(display_pred, labels, bboxes, landmarks)
+            epoch_val_loss_avg(val_loss)
+            epoch_val_acc_avg(acc_value)
+
+        print("\nEpoch {0}: Loss: {1} Accuracy: {2} val_loss: {3} val_acc: {4}".format(epoch, 
+                                                                                       epoch_loss_avg.result(), 
+                                                                                       epoch_accuracy_avg.result(),
+                                                                                       epoch_val_loss_avg.result(),
+                                                                                       epoch_val_acc_avg.result()))
         print("VALIDATION: try to predict a pos pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/7.jpg"), axis=0))[0].numpy())
         print("VALIDATION: try to predict a neg pic for cls_prob: ", model(tf.expand_dims(load_and_get_normalization_img("test/not test/glass.jpg"), axis=0))[0].numpy())
 

@@ -180,11 +180,12 @@ class R_Net(keras.Model):
         self.flatten = keras.layers.Flatten()
         self.fc1 = keras.layers.Dense(128, name="fc1")
         self.prelu4 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu4")
+        self.dropout = keras.layers.Dropout(0.5, name="dropout1")
         self.cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")
         self.bbox_pred = keras.layers.Dense(4, name="bbox_fc")
         self.landmark_pred = keras.layers.Dense(10, name="landmark_fc")
 
-    def call(self, inputs):
+    def call(self, inputs, training=False):
         # Define your forward pass here,
         # using layers you previously defined (in `__init__`).
         x = self.conv1(inputs)
@@ -198,6 +199,8 @@ class R_Net(keras.Model):
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.prelu4(x)
+        if training:
+            x = self.dropout(x)
         return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]
 
     def get_summary(self, input_shape):
@@ -224,12 +227,13 @@ class O_Net(keras.Model):
         self.flatten = keras.layers.Flatten()
         self.fc1 = keras.layers.Dense(256, name="fc1")
         self.prelu5 = keras.layers.PReLU(tf.constant_initializer(0.25), name="prelu5") 
+        self.dropout = keras.layers.Dropout(0.5, name="dropout1")
         self.cls_prob = keras.layers.Dense(2, activation="softmax", name="cls_fc")
         self.bbox_pred = keras.layers.Dense(4, name="bbox_fc")
         self.landmark_pred = keras.layers.Dense(10, name="landmark_fc")
 
 
-    def call(self, inputs):
+    def call(self, inputs, training=False):
         # Define your forward pass here,
         # using layers you previously defined (in `__init__`).
         x = self.conv1(inputs)
@@ -246,6 +250,8 @@ class O_Net(keras.Model):
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.prelu5(x)
+        if training:
+            x = self.dropout(x)
         return [self.cls_prob(x), self.bbox_pred(x), self.landmark_pred(x)]
 
     def get_summary(self, input_shape):

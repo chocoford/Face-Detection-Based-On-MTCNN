@@ -1,0 +1,14 @@
+../data/ultramodern_model/ONet\ckpt-1: Loss: 0.12065529823303223 Accuracy: 0.9658798575401306 Val_Loss: nan Val_Acc: 0.9559404253959656
+../data/ultramodern_model/ONet\ckpt-2: Loss: 0.08068148791790009 Accuracy: 0.9802597761154175 Val_Loss: nan Val_Acc: 0.9631617069244385
+../data/ultramodern_model/ONet\ckpt-3: Loss: 0.07131706178188324 Accuracy: 0.9838579893112183 Val_Loss: nan Val_Acc: 0.9716947078704834
+../data/ultramodern_model/ONet\ckpt-4: Loss: 0.06548535823822021 Accuracy: 0.9861096143722534 Val_Loss: nan Val_Acc: 0.9717119336128235
+../data/ultramodern_model/ONet\ckpt-5: Loss: 0.06126587092876434 Accuracy: 0.9880977272987366 Val_Loss: nan Val_Acc: 0.9727051258087158
+../data/ultramodern_model/ONet\ckpt-6: Loss: 0.05851340666413307 Accuracy: 0.9892529249191284 Val_Loss: nan Val_Acc: 0.9715734124183655
+../data/ultramodern_model/ONet\ckpt-7: Loss: 0.05570008605718613 Accuracy: 0.9905032515525818 Val_Loss: nan Val_Acc: 0.9726735353469849
+../data/ultramodern_model/ONet\ckpt-8: Loss: 0.05326473340392113 Accuracy: 0.9919160008430481 Val_Loss: nan Val_Acc: 0.9730727672576904
+../data/ultramodern_model/ONet\ckpt-9: Loss: 0.05150086432695389 Accuracy: 0.9926753044128418 Val_Loss: nan Val_Acc: 0.9701786637306213
+../data/ultramodern_model/ONet\ckpt-10: Loss: 0.049711354076862335 Accuracy: 0.9935474395751953 Val_Loss: nan Val_Acc: 0.9766977429389954
+../data/ultramodern_model/ONet\ckpt-11: Loss: 0.04886481538414955 Accuracy: 0.994076132774353 Val_Loss: nan Val_Acc: 0.9742445349693298
+../data/ultramodern_model/ONet\ckpt-12: Loss: 0.0471368283033371 Accuracy: 0.9948796033859253 Val_Loss: nan Val_Acc: 0.9636079668998718
+../data/ultramodern_model/ONet\ckpt-13: Loss: 0.046308111399412155 Accuracy: 0.9952449202537537 Val_Loss: nan Val_Acc: 0.9738984704017639
+../data/ultramodern_model/ONet\ckpt-14: Loss: 0.045410193502902985 Accuracy: 0.9956608414649963 Val_Loss: nan Val_Acc: 0.970704972743988

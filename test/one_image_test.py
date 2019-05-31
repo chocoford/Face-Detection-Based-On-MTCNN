@@ -20,7 +20,7 @@ stride = 2
 slide_window = False
 shuffle = False
 detectors = [None, None, None]
-prefix = ['../data/ultramodern_model/PNet', '../data/ultramodern_model/RNet', '../data/ultramodern_model/ONet']
+prefix = ['data/ultramodern_model/PNet', 'data/ultramodern_model/RNet', 'data/ultramodern_model/ONet']
 batch_size = [2048, 64, 16]
 # model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
 # load pnet model

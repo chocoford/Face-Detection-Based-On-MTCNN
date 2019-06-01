@@ -1,9 +1,5 @@
 import os
 
-
-
-
-
 def get_file_names(data_dir,f_type):
     file_names = []
     nfold = 10

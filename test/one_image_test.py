@@ -1,13 +1,11 @@
 #coding:utf-8
-import sys
+import sys, os
 sys.path.append('..')
 from Detection.MtcnnDetector import MtcnnDetector
 from Detection.detector import Detector
 from Detection.fcn_detector import FCNDetector
 from train_models.mtcnn_model import P_Net, R_Net, O_Net
-from prepare_data.loader import TestLoader
 import cv2
-import os
 import numpy as np
 import tensorflow as tf
 
@@ -43,7 +41,6 @@ test_img_path = []
 path = "test/test images"
 for item in os.listdir(path):
     test_img_path.append(os.path.join(path,item))
-# test_data = TestLoader(gt_imdb)
 
 
 all_boxes,landmarks = mtcnn_detector.detect_face(test_img_path)

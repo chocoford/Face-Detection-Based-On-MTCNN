@@ -4,7 +4,6 @@ import sys, os
 sys.path.append("..")
 import argparse
 from train_models.mtcnn_model import P_Net, R_Net, O_Net
-from prepare_data.loader import TestLoader
 from Detection.detector import Detector
 from Detection.fcn_detector import FCNDetector
 from Detection.MtcnnDetector import MtcnnDetector
@@ -70,7 +69,6 @@ if __name__ == "__main__":
         fid = open(dets_file_name,'w')
         sys.stdout.write('%s ' % (i + 1))
         image_names_abs = [os.path.join(data_dir,image_name+'.jpg') for image_name in image_names]
-        # test_data = TestLoader(image_names_abs)
         all_boxes,_ = mtcnn_detector.detect_face(image_names_abs)
         
         for idx,im_name in enumerate(image_names):

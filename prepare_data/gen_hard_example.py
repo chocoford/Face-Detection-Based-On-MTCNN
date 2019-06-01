@@ -17,7 +17,7 @@ from train_models.mtcnn_model import P_Net, R_Net, O_Net
 from train_models.MTCNN_config import config
 from prepare_data.loader import TestLoader
 from Detection.detector import Detector
-from Detection.fcn_detector import FcnDetector
+from Detection.fcn_detector import FCNDetector
 from Detection.MtcnnDetector import MtcnnDetector
 from prepare_data.utils import load_wider_face_gt_boxes, IoU, get_path
 #net : 24(RNet)/48(ONet)
@@ -151,7 +151,7 @@ def t_net(prefix, epoch,
     model_path = ['%s-%s' % (x, y) for x, y in zip(prefix, epoch)]
     print(model_path[0])
     # load pnet model
-    PNet = FcnDetector(P_Net, model_path[0])
+    PNet = FCNDetector(P_Net, model_path[0])
     detectors[0] = PNet
 
     # load rnet model

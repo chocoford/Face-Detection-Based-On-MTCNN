@@ -34,8 +34,14 @@ mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
                                stride=stride, threshold=thresh, slide_window=slide_window)
 
 video_capture = cv2.VideoCapture(0)
-video_capture.set(3, 400)
-video_capture.set(4, 400)
+
+if detect_mode == Detect_mode.concurrent:
+    video_capture.set(3, 1440)
+    video_capture.set(4, 400)
+elif detect_mode == Detect_mode.simultaneous:
+    video_capture.set(3, 400)
+    video_capture.set(4, 500)
+
 corpbbox = None
 boxes_c, landmarks = np.array([]), np.array([])
 

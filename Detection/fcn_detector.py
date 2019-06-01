@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 import sys, os
 sys.path.append("../")
-from train_models.MTCNN_config import config
 from train_models.mtcnn_model import P_Net
 
 from train_models.utils import load_and_get_normalization_img

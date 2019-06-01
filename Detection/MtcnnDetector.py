@@ -5,7 +5,6 @@ import sys
 import tensorflow as tf
 
 sys.path.append("../")
-from train_models.MTCNN_config import config
 from Detection.nms import py_nms
 
 

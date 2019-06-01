@@ -1,6 +1,5 @@
 #coding:utf-8
 import tensorflow as tf
-from tensorflow.contrib import slim
 from tensorflow import keras
 from keras.utils import plot_model
 import numpy as np
@@ -115,22 +114,6 @@ def cal_accuracy(cls_prob,label):
     # ACC = (TP+FP)/total population
     accuracy_op = tf.reduce_mean(tf.cast(tf.equal(label_picked,pred_picked),tf.float32))
     return accuracy_op
-
-
-def _activation_summary(x):
-    '''
-    creates a summary provides histogram of activations
-    creates a summary that measures the sparsity of activations
-
-    :param x: Tensor
-    :return:
-    '''
-
-    tensor_name = x.op.name
-    print('load summary for : ',tensor_name)
-    tf.summary.histogram(tensor_name + '/activations',x)
-    #tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
-
 
 class P_Net(keras.Model):
     def __init__(self):

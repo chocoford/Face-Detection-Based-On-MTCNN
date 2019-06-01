@@ -14,7 +14,7 @@ class Detect_mode():
     simultaneous = 0
     concurrent = 1
 
-detect_mode = Detect_mode.concurrent
+detect_mode = Detect_mode.simultaneous
 test_mode = "onet"
 thresh = [0.9, 0.9, 0.9]
 min_face_size = 24
@@ -23,7 +23,7 @@ slide_window = False
 shuffle = False
 #vis = True
 detectors = [None, None, None]
-prefix = ['data/ultramodern_model/PNet', 'data/ultramodern_model/RNet', '/data/ultramodern_model/ONet']
+prefix = ['data/ultramodern_model/PNet', 'data/ultramodern_model/RNet', 'data/ultramodern_model/ONet']
 PNet = FCNDetector(P_Net, prefix[0])
 detectors[0] = PNet
 RNet = Detector(R_Net, 24, 1, prefix[1])
@@ -34,8 +34,8 @@ mtcnn_detector = MtcnnDetector(detectors=detectors, min_face_size=min_face_size,
                                stride=stride, threshold=thresh, slide_window=slide_window)
 
 video_capture = cv2.VideoCapture(0)
-video_capture.set(3, 900)
-video_capture.set(4, 1440)
+video_capture.set(3, 400)
+video_capture.set(4, 400)
 corpbbox = None
 boxes_c, landmarks = np.array([]), np.array([])
 

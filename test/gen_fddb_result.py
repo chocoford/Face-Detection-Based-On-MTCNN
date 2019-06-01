@@ -74,7 +74,7 @@ if __name__ == "__main__":
         all_boxes,_ = mtcnn_detector.detect_face(image_names_abs)
         
         for idx,im_name in enumerate(image_names):
-            img_path = os.path.join(data_dir,'originalPics',im_name+'.jpg')
+            img_path = os.path.join(data_dir,im_name+'.jpg')
             image = cv2.imread(img_path)
             boxes = all_boxes[idx]
             if boxes is None:

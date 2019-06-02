@@ -14,7 +14,7 @@ class Detect_mode():
     simultaneous = 0
     concurrent = 1
 
-detect_mode = Detect_mode.simultaneous
+detect_mode = Detect_mode.concurrent
 test_mode = "onet"
 thresh = [0.9, 0.9, 0.9]
 min_face_size = 24

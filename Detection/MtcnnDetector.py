@@ -497,8 +497,8 @@ class MtcnnDetector(object):
                     continue
 
             all_boxes.append(boxes_c)
-            landmark = [1]
-            # landmarks.append(landmark)
+            # landmark = [1]
+            landmarks.append(landmark)
 
             
         print('num of images', num_of_img)

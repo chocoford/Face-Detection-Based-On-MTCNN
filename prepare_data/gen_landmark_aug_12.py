@@ -8,9 +8,6 @@ import numpy as np
 from prepare_data.utils import generateData
 
 
-
-
-
 if __name__ == '__main__':
     dstdir = "../DATA/12/train_PNet_landmark_aug"
     output_path = '../DATA/12'

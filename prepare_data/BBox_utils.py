@@ -34,7 +34,7 @@ def drawLandmark(img, bbox, landmark):
 def getDataFromTxt(txt,data_path, with_landmark=True):
     """
     Generate data from txt file
-    return
+    Return
     -------------
         [(img_path, bbox, landmark)]
         img_path: String
